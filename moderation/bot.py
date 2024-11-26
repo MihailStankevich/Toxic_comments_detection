@@ -37,11 +37,13 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await sync_to_async(DeletedComment.objects.create)(
                 post=original_message.text,
                 comment=update.message.text,
-                user=update.message.from_user.username  # Assuming you want to store the username
+                user=update.message.from_user.username,
+                channel_id=str(update.message.chat.id)
             )
             await update.message.delete()
             deleted_messages.append(update.message.text)
             print(f'The comment -{update.message.text}- was deleted')
+            print("Channel id = ", update.message.chat.id)
         
         
 

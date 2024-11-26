@@ -21,8 +21,9 @@ class DeletedComment(models.Model):
     comment = models.CharField(max_length=400)
     user = models.CharField(max_length=400)
     post = models.CharField(max_length=400)
+    channel_id = models.CharField(max_length=100)
     deleted_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"Comment by {self.user.id} on {self.post.title}"
+        return f"Comment by {self.user} on {self.post}"
     

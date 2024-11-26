@@ -1,0 +1,26 @@
+<!-- myapp/templates/myapp/deleted_comments.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deleted Comments</title>
+</head>
+<body>
+    <h1>Deleted Comments</h1>
+    <ul>
+        {% for comment in deleted_comments %}
+            <li>
+                <strong>Content:</strong> {{ comment.comment }}<br>
+                <strong>User :</strong> {{ comment.user }}<br>
+                <strong>Post :</strong> {{ comment.post }}<br>
+                <strong>Channel id :</strong> {{ comment.channel_id }}
+                <strong>Deleted On :</strong> {{ comment.deleted_at }}<br>
+                <!-- Add more fields as necessary -->
+            </li>
+        {% empty %}
+            <li>No deleted comments found.</li>
+        {% endfor %}
+    </ul>
+</body>
+</html>
