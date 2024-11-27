@@ -5,7 +5,7 @@ from asgiref.sync import sync_to_async
 from telegram import Update
 from telegram.ext import Application, MessageHandler, filters, ContextTypes
 from moderation.ml import model, vectorizer
-from moderation.models import DeletedComment 
+from moderation.models import DeletedComment , Owner
 def predict_comment(comment, vectorizer, model):
     # Vectorize the input comment
     comment_vector = vectorizer.transform([comment])
@@ -26,24 +26,23 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.message.chat.type == "supergroup":
         original_message = update.message.reply_to_message
         print(f"Message from supergroup: {update.message.text}")
-        print(f"Original post text: {original_message.text}")
         result = predict_comment(update.message.text, vectorizer, model)
         print(result)
-        print(update.message.from_user.username)
         
         
         if result == "Offensive":
-            
+            owner = await sync_to_async(Owner.objects.get)(channel_id=str(update.message.chat.id))
+            print("Owner: ",owner)
             await sync_to_async(DeletedComment.objects.create)(
                 post=original_message.text,
                 comment=update.message.text,
                 user=update.message.from_user.username,
-                channel_id=str(update.message.chat.id)
+                channel_id=str(update.message.chat.id),
+                owner = owner
             )
             await update.message.delete()
             deleted_messages.append(update.message.text)
             print(f'The comment -{update.message.text}- was deleted')
-            print("Channel id = ", update.message.chat.id)
         
         
 
