@@ -39,7 +39,7 @@ class Owner(AbstractUser):
         verbose_name='user permissions',
     )
     def __str__(self):
-        return self.email
+        return self.username
           
 class DeletedComment(models.Model):
     comment = models.CharField(max_length=400)
