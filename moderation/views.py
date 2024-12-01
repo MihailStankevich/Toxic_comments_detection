@@ -26,7 +26,7 @@ def register(request):
             owner.set_password(form.cleaned_data['password'])  # Hash the password
             owner.save()
             messages.success(request, "Registration successful! You can now log in.")
-            return redirect('login')  # Redirect to the login page after successful registration
+            return redirect('login')  
     else:
         form = OwnerRegistrationForm()
     

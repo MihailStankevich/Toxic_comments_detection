@@ -1,12 +1,9 @@
-<!-- myapp/templates/myapp/deleted_comments.html -->
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Deleted Comments</title>
-</head>
-<body>
+
+{% extends 'moderation/base.html' %}
+
+{% block title %}Home Page{% endblock %}
+
+{% block content %}
     <h1>Deleted Comments</h1>
     <ul>
         {% for comment in deleted_comments %}
@@ -22,5 +19,4 @@
             <li>No deleted comments found.</li>
         {% endfor %}
     </ul>
-</body>
-</html>
+{% endblock %}

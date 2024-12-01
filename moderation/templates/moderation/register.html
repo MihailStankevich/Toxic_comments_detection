@@ -1,24 +1,32 @@
-<!-- moderation/templates/moderation/register.html -->
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register</title>
-</head>
-<body>
+{% extends 'moderation/base.html' %}
+
+{% block title %}Register Page{% endblock %}
+
+{% block content %}
+<div class="form-container">
     <h1>Register</h1>
-    <form method="POST">
+    <form method="POST" class="register-form">
         {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Register</button>
+        <div class="form-group">
+            <label for="username">Email:</label>
+            <input type="email" name="username" required class="form-input">
+        </div>
+        <div class="form-group">
+            <label for="password">Password:</label>
+            <input type="password" name="password" required class="form-input">
+        </div>
+        <div class="form-group">
+            <label for="channel_id">Channel ID:</label>
+            <input type="text" name="channel_id" required class="form-input">
+        </div>
+        <button type="submit" class="form-button">Register</button>
     </form>
     {% if messages %}
-        <ul>
+        <ul class="error-messages">
             {% for message in messages %}
                 <li>{{ message }}</li>
             {% endfor %}
         </ul>
     {% endif %}
-</body>
-</html>
+</div>
+{% endblock %}
