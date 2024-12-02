@@ -19,8 +19,7 @@ def predict_comment(comment, vectorizer, model):
 
 
 nest_asyncio.apply()
-deleted_messages = []
-# Function to handle messages
+
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     if update.message.chat.type == "supergroup":
@@ -33,15 +32,21 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if result == "Offensive":
             owner = await sync_to_async(Owner.objects.get)(channel_id=str(update.message.chat.id))
             print("Owner: ",owner)
+
+            if original_message.caption:
+                post_text = f"{original_message.caption[:20]}..."
+            elif original_message.text:
+                post_text = f"{original_message.text[:20]}..."
+            else:
+                post_text = "No text"
             await sync_to_async(DeletedComment.objects.create)(
-                post=original_message.text,
+                post=post_text,
                 comment=update.message.text,
                 user=update.message.from_user.username,
                 channel_id=str(update.message.chat.id),
                 owner = owner
             )
             await update.message.delete()
-            deleted_messages.append(update.message.text)
             print(f'The comment -{update.message.text}- was deleted')
         
         

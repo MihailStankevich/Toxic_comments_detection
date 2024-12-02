@@ -9,7 +9,7 @@ from django.contrib.auth.decorators import login_required
 
 @login_required
 def admin_deleted_comments(request, channel_id):
-    deleted_comments = DeletedComment.objects.filter(channel_id=channel_id)
+    deleted_comments = DeletedComment.objects.filter(channel_id=channel_id).order_by('-deleted_at')[:3]
     return render(request, 'moderation/deleted_comments.html', {'deleted_comments': deleted_comments})
 
 def home(request):
@@ -23,7 +23,7 @@ def register(request):
         form = OwnerRegistrationForm(request.POST)
         if form.is_valid():
             owner = form.save(commit=False)
-            owner.set_password(form.cleaned_data['password'])  # Hash the password
+            owner.set_password(form.cleaned_data['password'])   # Hash the password
             owner.save()
             messages.success(request, "Registration successful! You can now log in.")
             return redirect('login')  
@@ -34,13 +34,13 @@ def register(request):
 
 def user_login(request):
     if request.method == 'POST':
-        username = request.POST['username']  # Get username (email)
-        password = request.POST['password']  # Get password
+        username = request.POST['username']  
+        password = request.POST['password']  
         owner = authenticate(request, username=username, password=password)
         
         if owner is not None:
             login(request, owner)  # Log the user in
-            return redirect('admin_deleted_comments', channel_id=owner.channel_id)  # Redirect to deleted comments page
+            return redirect('admin_deleted_comments', channel_id=owner.channel_id) 
         else:
             messages.error(request, "Invalid username or password.")
     
