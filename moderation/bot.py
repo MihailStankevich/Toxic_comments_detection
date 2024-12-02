@@ -40,9 +40,9 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             else:
                 post_text = "No text"
             await sync_to_async(DeletedComment.objects.create)(
-                post=post_text,
-                comment=update.message.text,
-                user=update.message.from_user.username,
+                post=post_text.lower(),
+                comment=update.message.text.lower(),
+                user=update.message.from_user.username.lower(),
                 channel_id=str(update.message.chat.id),
                 owner = owner
             )
