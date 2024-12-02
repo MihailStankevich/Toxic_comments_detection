@@ -5,6 +5,10 @@
 
 {% block content %}
     <h1>Deleted Comments</h1>
+    <form method="GET" action="{% url 'admin_deleted_comments' channel_id %}">
+      <input type="text" name="search" placeholder="Search deleted comments..." value="{{ search_query }}">
+      <button type="submit">Search</button>
+  </form>
     <ul>
         {% for comment in deleted_comments %}
             <li>

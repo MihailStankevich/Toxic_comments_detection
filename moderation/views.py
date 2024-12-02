@@ -9,8 +9,12 @@ from django.contrib.auth.decorators import login_required
 
 @login_required
 def admin_deleted_comments(request, channel_id):
-    deleted_comments = DeletedComment.objects.filter(channel_id=channel_id).order_by('-deleted_at')[:3]
-    return render(request, 'moderation/deleted_comments.html', {'deleted_comments': deleted_comments})
+    deleted_comments = DeletedComment.objects.filter(channel_id=channel_id).order_by('-deleted_at')
+    search_query = request.GET.get('search', '')
+    if search_query:
+        deleted_comments = deleted_comments.filter(post__icontains=search_query)
+
+    return render(request, 'moderation/deleted_comments.html', {'deleted_comments': deleted_comments, "channel_id": channel_id})
 
 def home(request):
     return render(request, 'moderation/home.html')
