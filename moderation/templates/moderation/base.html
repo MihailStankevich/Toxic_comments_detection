@@ -28,6 +28,13 @@
             {% endif %}
         </div>
     </header>
+    {% if messages %}
+    <ul class="error-messages">
+        {% for message in messages %}
+            <li>{{ message }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
     <main>
         {% block content %}
         {% endblock %}
