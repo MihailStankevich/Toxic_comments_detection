@@ -14,11 +14,22 @@
             <li>
                 <strong>Comment:</strong> {{ comment.comment }}<br>
                 <strong>From User:</strong> {{ comment.user }}<br>
-                <strong>Post:</strong> {{ comment.post }}<br>
+                <strong>Post text:</strong> {{ comment.post }}<br>
                 <strong>Deleted On:</strong> {{ comment.deleted_at }}<br>
+                <form method="POST" action="{% url 'block_user' comment.user %}">
+                    {% csrf_token %}
+                    <label for="block_duration">Block Duration (in minutes):</label>
+                    <input type="number" name="block_duration" min="1" required>
+                    <button type="submit">Block User</button>
+                </form>
             </li>
         {% empty %}
             <li>No deleted comments found.</li>
         {% endfor %}
+        {% if comments %}
+            {% for comment in comments %}
+            <li>  <strong>Comment:</strong> {{ comment }}<br>
+            {% endfor %}
+        {% endif %}
     </ul>
 {% endblock %}

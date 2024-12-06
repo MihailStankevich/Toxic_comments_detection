@@ -1,5 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser,Group, Permission
+from django.utils import timezone
+from datetime import timedelta
 # Create your models here.
 ''' 
 class Post(models.Model):
@@ -52,3 +54,14 @@ class DeletedComment(models.Model):
     def __str__(self):
         return f"Comment by {self.user} on {self.post}"
     
+class BlockedUser(models.Model):
+    username = models.CharField(max_length=200)
+    owner = models.ForeignKey(Owner, on_delete=models.CASCADE, related_name='blocked_users')
+    blocked_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+
+    def is_active(self):
+        return timezone.now() < self.expires_at
+    
+    def __str__(self):
+        return f'{self.username}'

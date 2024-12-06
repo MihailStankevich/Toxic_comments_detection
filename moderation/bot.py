@@ -5,7 +5,7 @@ from asgiref.sync import sync_to_async
 from telegram import Update
 from telegram.ext import Application, MessageHandler, filters, ContextTypes
 from moderation.ml import model, vectorizer
-from moderation.models import DeletedComment , Owner
+from moderation.models import DeletedComment , Owner, BlockedUser
 def predict_comment(comment, vectorizer, model):
     # Vectorize the input comment
     comment_vector = vectorizer.transform([comment])
@@ -23,6 +23,21 @@ nest_asyncio.apply()
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     if update.message.chat.type == "supergroup":
+        owner = await sync_to_async(Owner.objects.get)(channel_id=str(update.message.chat.id))
+
+        blocked_user_queryset = (BlockedUser .objects.filter)(
+            username=update.message.from_user.username.lower(),
+            owner=owner
+        ).select_related('owner') 
+        
+        blocked_user = await sync_to_async(blocked_user_queryset.first)() 
+        # Check if the blocked_user exists and is active
+        if blocked_user and blocked_user.is_active():
+            await update.message.reply_text("You are blocked from commenting.")
+            await update.message.delete()
+            return  # Exit the function if the user is blocked
+         # Exit the function if the user is blocked
+        
         original_message = update.message.reply_to_message
         print(f"Message from supergroup: {update.message.text}")
         result = predict_comment(update.message.text, vectorizer, model)
@@ -30,7 +45,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         
         
         if result == "Offensive":
-            owner = await sync_to_async(Owner.objects.get)(channel_id=str(update.message.chat.id))
             print("Owner: ",owner)
 
             if original_message.caption:
