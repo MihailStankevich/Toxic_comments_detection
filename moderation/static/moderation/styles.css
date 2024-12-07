@@ -111,23 +111,79 @@ label {
     outline: none; /* Remove default outline */
 }
 
-.form-button {
-    width: 100%; /* Full width button */
-    padding: 10px; /* Padding inside button */
-    background-color: #007BFF; /* Button background color */
-    color: white; /* Button text color */
-    border: none; /* Remove border */
-    border-radius: 4px; /* Rounded corners for button */
-    cursor: pointer; /* Pointer cursor on hover */
-    font-size: 16px; /* Font size for button */
-}
-
-.form-button:hover {
-    background-color: #0056b3; /* Darker shade on hover */
-}
 
 .error-messages {
     color: red; /* Color for error messages */
     list-style-type: none; /* Remove bullet points */
     padding: 0; /* Remove padding */
 }
+
+table {
+    width: 100%;
+    border-collapse: collapse; /* Merge borders */
+    margin-top: 20px; /* Space above the table */
+}
+
+th, td {
+    border: 1px solid #ddd; /* Border for table cells */
+    padding: 8px; /* Padding inside cells */
+    text-align: left; /* Align text to the left */
+}
+
+th {
+    background-color: #f2f2f2; /* Light gray background for header */
+}
+
+tr:hover {
+    background-color: #f1f1f1; /* Highlight row on hover */
+}
+
+form {
+    display: inline; /* Keep the form inline */
+}
+
+.form-button{
+    color: #f1f1f1;
+}
+.search-form {
+    display: flex; /* Use flexbox for alignment */
+    justify-content: center; /* Center the form */
+    margin-bottom: 20px; /* Space below the search form */
+}
+
+.search-input {
+    width: 300px; /* Set a fixed width for the input */
+    padding: 10px; /* Add padding inside the input */
+    border: 1px solid #ccc; /* Border color */
+    border-radius: 4px; /* Rounded corners */
+    box-sizing: border-box; /* Include padding and border in width */
+    font-size: 16px; /* Font size */
+}
+
+.search-input:focus {
+    border-color: #007BFF; /* Change border color on focus */
+    outline: none; /* Remove default outline */
+}
+
+
+.comment-container {
+    display: flex; /* Use flexbox for alignment */
+    align-items: center; /* Center items vertically */
+}
+
+.comment-cell {
+    display: inline-block; /* Allow the cell to behave like an inline element */
+    max-width: 300px; /* Set a maximum width for the comment cell */
+    overflow: hidden; /* Hide overflow text */
+    text-overflow: ellipsis; /* Add ellipsis for overflow text */
+    white-space: nowrap; /* Prevent text from wrapping */
+    cursor: pointer; /* Change cursor to pointer to indicate it's clickable */
+    padding: 10px; /* Add some padding for better spacing */
+    border: 1px solid #ccc; /* Add a light border */
+    border-radius: 4px; /* Rounded corners */
+    background-color: #f9f9f9; /* Light background color */
+    transition: background-color 0.3s; /* Smooth transition for background color */
+    margin-right: 10px; /* Space between comment and button */
+}
+
+

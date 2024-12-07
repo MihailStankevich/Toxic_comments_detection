@@ -8,6 +8,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 
 from django.utils import timezone
+from django.core.paginator import Paginator
 
 @login_required
 def admin_deleted_comments(request, channel_id):
@@ -15,9 +16,14 @@ def admin_deleted_comments(request, channel_id):
     search_query = request.GET.get('search', '')
     if search_query:
         deleted_comments = deleted_comments.filter(post__icontains=search_query)
-    else:
-        deleted_comments = deleted_comments[:5]
-    return render(request, 'moderation/deleted_comments.html', {'deleted_comments': deleted_comments, "channel_id": channel_id})
+
+    paginator = Paginator(deleted_comments, 5)  # Show 5 comments per page
+    page_number = request.GET.get('page', 1)  # Get the current page number
+    comments_page = paginator.get_page(page_number) 
+
+    blocked_users = BlockedUser .objects.filter(owner=request.user, expires_at__gt=timezone.now()).values_list('username', flat=True)
+
+    return render(request, 'moderation/deleted_comments.html', {'deleted_comments': comments_page, "channel_id": channel_id, "blocked_users": blocked_users})
 
 def home(request):
     return render(request, 'moderation/home.html')
