@@ -1,35 +1,80 @@
-
 {% extends 'moderation/base.html' %}
 
-{% block title %}Home Page{% endblock %}
+{% block title %}Deleted Comments{% endblock %}
 
 {% block content %}
     <h1>Deleted Comments</h1>
-    <form method="GET" action="{% url 'admin_deleted_comments' channel_id %}">
-      <input type="text" name="search" placeholder="Search deleted comments..." value="{{ search_query }}">
-      <button type="submit">Search</button>
-  </form>
-    <ul>
-        {% for comment in deleted_comments %}
-            <li>
-                <strong>Comment:</strong> {{ comment.comment }}<br>
-                <strong>From User:</strong> {{ comment.user }}<br>
-                <strong>Post text:</strong> {{ comment.post }}<br>
-                <strong>Deleted On:</strong> {{ comment.deleted_at }}<br>
-                <form method="POST" action="{% url 'block_user' comment.user %}">
-                    {% csrf_token %}
-                    <label for="block_duration">Block Duration (in minutes):</label>
-                    <input type="number" name="block_duration" min="1" required>
-                    <button type="submit">Block User</button>
-                </form>
-            </li>
-        {% empty %}
-            <li>No deleted comments found.</li>
-        {% endfor %}
-        {% if comments %}
-            {% for comment in comments %}
-            <li>  <strong>Comment:</strong> {{ comment }}<br>
+    <form method="GET" action="{% url 'admin_deleted_comments' channel_id %}" class="search-form">
+        <input type="text" name="search" placeholder="Search by post's text" value="{{ search_query }}" class="search-input">
+        <button type="submit">Search</button>
+    </form>
+    
+    <table>
+        <thead>
+            <tr>
+                <th>Comment</th>
+                <th>From User</th>
+                <th>Post Text</th>
+                <th>Deleted On</th>
+                <th>Is blocked(✔/✖)</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for comment in deleted_comments %}
+                <tr>
+                    <td>
+                        <div class="comment-container">
+                            <span class="comment-cell">
+                                {{ comment.comment|truncatechars:50 }}
+                            </span>
+                            <button onclick="toggleComment('full-comment-{{ forloop.counter }}')">Show the comment</button>
+                        </div>
+                        <div id="full-comment-{{ forloop.counter }}" class="full-comment" style="display:none;">
+                            {{ comment.comment }}
+                        </div>
+                    </td>
+                    <td>{{ comment.user }}</td>
+                    <td>{{ comment.post }}</td>
+                    <td>{{ comment.deleted_at }}</td>
+                    <td>
+                        <span>
+                            {% if comment.user in blocked_users %}
+                                ✔ 
+                            {% else %}
+                                ✖ 
+                            {% endif %}
+                        </span>
+                        <form method="POST" action="{% url 'block_user' comment.user %}">
+                            {% csrf_token %}
+                            <input type="number" name="block_duration" min="1" required>
+                            <button type="submit">Block User (minutes)</button>
+                        </form>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="5">No deleted comments found.</td>
+                </tr>
             {% endfor %}
+        </tbody>
+    </table>
+    <div class="pagination-container">
+        {% if deleted_comments.has_previous %}
+            <button><a href="?page={{ deleted_comments.previous_page_number }}&search={{ search_query }}" class="form-button">Previous</a></button>
         {% endif %}
-    </ul>
+        
+        {% if deleted_comments.has_next %}
+    <button><a href="?page={{ deleted_comments.next_page_number }}&search={{ search_query }}" class="form-button">Load More</a></button>
+        {% endif %}
+    </div>
+    <script>
+        function toggleComment(commentId) {
+            var fullComment = document.getElementById(commentId);
+            if (fullComment.style.display === "none" || fullComment.style.display === "") {
+                fullComment.style.display = "block";
+            } else {
+                fullComment.style.display = "none";
+            }
+        }
+    </script>
 {% endblock %}
