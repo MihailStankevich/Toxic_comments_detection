@@ -20,11 +20,12 @@ header {
 }
 .logo {
     display: flex;
-    align-items: center; /* Center logo and text vertically */
+    align-items: center; 
+    max-width: 190px;
+    max-height: 70px;
 }
 .logo img {
-    height: 70px;
-    width: 120px; /* Adjust logo height */
+
     margin-right: 10px; /* Space between logo and name */
 }
 .auth-links {
@@ -51,6 +52,8 @@ button {
     cursor: pointer;
     border-radius: 5px;
     margin: 10px; 
+    cursor: pointer;
+    transition: background-color 0.3s;
 }
 
 button:hover {
@@ -128,7 +131,10 @@ label {
 table {
     width: 100%;
     border-collapse: collapse; /* Merge borders */
-    margin-top: 20px; /* Space above the table */
+    margin-top: 20px; 
+    background-color: #ffffff; /* White background for the table */
+    border-radius: 8px; /* Rounded corners */
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
 th, td {
@@ -138,11 +144,10 @@ th, td {
 }
 
 th {
-    background-color: #f2f2f2; /* Light gray background for header */
+    background-color: #e6eff8; /* Header color */
+    font-weight: bold; /* Light gray background for header */
 }
-tr{
-    background-color: #f2f2f2;
-}
+
 tr:hover {
     background-color: #f1f1f1; /* Highlight row on hover */
 }
