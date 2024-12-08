@@ -174,7 +174,9 @@ form {
     outline: none; /* Remove default outline */
 }
 
-
+.emphasized {
+    color: #007BFF; /* Use the primary color for the emphasized text */
+}
 
 .comment-cell {
     display: inline-block; /* Allow the cell to behave like an inline element */
@@ -192,13 +194,34 @@ form {
 }
 
 
+
 .home-container {
     text-align: center; /* Center the text */
     margin: 20px; /* Add some margin */
 }
 
+.home-text {
+    text-transform: uppercase;
+    font-size: 40px; /* Slightly larger font size for the heading */
+    font-weight: bold; /* Bold heading for emphasis */
+    color: #333; /* Darker color for better readability */
+    margin-bottom: 30px;
+     /* Space below heading */
+}
+
+.home-description {
+    font-size: 18px; /* Adjusted font size for descriptions */
+    line-height: 1.6; /* Increased line height for better readability */
+    color: #555; /* Softer color for descriptions */
+    margin-bottom: 10px; /* Space below descriptions */
+}
+.contact-h2{
+    font-size: 30px;
+    font-weight: bold;
+    color: #007BFF;
+}
 .contact-form-container {
-    width: 60vh; /* Set a max width for the form */
+    width: 90%; /* Set a max width for the form */
     margin: 0 auto; /* Center the form */
     padding: 20px; /* Add padding */
     background-color: #f9f9f9; /* Light background color */
@@ -225,11 +248,6 @@ h3 {
     color: #007BFF; /* Use a primary color for subheadings */
 }
 
-/* Contact Form */
-.contact-form-container {
-    margin-top: 20px; 
-    /* Space above the form */
-}
 
 .form-group {
     margin-bottom: 15px; /* Space between form groups */
@@ -247,10 +265,11 @@ h3 {
     background-color: #007BFF; /* Primary button color */
     color: white;
     border: none;
-    padding: 10px 15px;
+    padding: 15px 40px;
     cursor: pointer;
     border-radius: 5px;
-    margin-top: 10px; /* Space above button */
+    margin-top: 10px;
+    
 }
 
 .form-button:hover {
@@ -270,3 +289,26 @@ h3 {
     justify-content: space-between; /* Space between comment text and button */
     align-items: center; /* Center items vertically */
 }
+
+
+.outer-container {
+    display: flex; /* Use Flexbox for layout */
+    justify-content: space-between; /* Space between text and form */
+    align-items: flex-start; /* Align items at the start */
+    width: 80%; /* Set a width for the container */
+    margin: 40px auto; /* Center the container */
+    padding: 50px; /* Add padding */
+    background-color: #ffffff; /* White background for the content */
+    border-radius: 8px; /* Rounded corners */
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+}
+
+.text-container {
+    flex: 1; /* Allow text container to grow */
+    margin-right: 60px; /* Space between text and form */
+}
+
+.home-container {
+    flex: 1; /* Allow home container to grow */
+}
+

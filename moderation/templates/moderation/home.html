@@ -3,15 +3,17 @@
 {% block title %}Home Page{% endblock %}
 
 {% block content %}
-        <h2>Are you tired of toxic comments and bots in your Telegram channel?</h2>
-        <p>Our software helps you to moderate your channel by automatically deleting toxic messages and spam</p>
-        <p>We use advanced Machine learning models to detect these messages</p>
-        <p>On our site you will be able to see all deleted comments and block users</p>
-        
+<div class='outer-container'>
+    <div class='text-container'>
+        <h2 class= "home-text">tired of <em class="emphasized">toxic</em> comments and <em class="emphasized">bots</em> in your Telegram channel?</h2>
+        <p class="home-description">We use advanced Machine learning models to detect these messages</p>
+        <p class="home-description">Our software helps you moderating your channel by automatically deleting toxic messages and spam</p>
+        <p class="home-description">On our site you will be able to see all deleted comments and block users</p>
+    </div>    
     <div class="home-container">
         <h2>Make your channel safe with SafeChannel</h2>
         <div class="contact-form-container">
-            <h3>Contact Us</h3>
+            <h2 class='contact-h2'>Contact Us</h2>
             <form method="POST" action="{% url 'contact' %}">
                 {% csrf_token %}
                 <div class="form-group">
@@ -26,4 +28,5 @@
             </form>
         </div>
     </div>
+</div>
 {% endblock %}

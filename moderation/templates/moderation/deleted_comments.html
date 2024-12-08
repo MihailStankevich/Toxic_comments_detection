@@ -3,6 +3,7 @@
 {% block title %}Deleted Comments{% endblock %}
 
 {% block content %}
+
     <h1>Deleted Comments</h1>
     <form method="GET" action="{% url 'admin_deleted_comments' channel_id %}" class="search-form">
         <input type="text" name="search" placeholder="Search by post's text" value="{{ search_query }}" class="search-input">
@@ -67,6 +68,7 @@
     <button><a href="?page={{ deleted_comments.next_page_number }}&search={{ search_query }}" class="form-button">Load More</a></button>
         {% endif %}
     </div>
+
     <script>
         function toggleComment(commentId) {
             var fullComment = document.getElementById(commentId);

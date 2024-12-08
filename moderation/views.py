@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect
-from .models import DeletedComment, BlockedUser 
+from .models import DeletedComment, BlockedUser
 
 from django.contrib import messages
 from .forms import OwnerRegistrationForm
@@ -36,11 +36,11 @@ def block_user(request, username):
         block_duration = int(request.POST.get('block_duration', 5))  # Default to 5min
         expires_at = timezone.now() + timezone.timedelta(minutes=block_duration)
 
-        # Create a new BlockedUser  entry
+        
         BlockedUser.objects.update_or_create(
             username=username,
             defaults={
-                'owner': request.user,  # Assuming you have the owner (user) available
+                'owner': request.user,  
                 'expires_at': expires_at
             }
         )
@@ -53,7 +53,7 @@ def register(request):
         form = OwnerRegistrationForm(request.POST)
         if form.is_valid():
             owner = form.save(commit=False)
-            owner.set_password(form.cleaned_data['password'])   # Hash the password
+            owner.set_password(form.cleaned_data['password'])  
             owner.save()
             messages.success(request, "Registration successful! You can now log in.")
             return redirect('login')  
@@ -69,7 +69,7 @@ def user_login(request):
         owner = authenticate(request, username=username, password=password)
         
         if owner is not None:
-            login(request, owner)  # Log the user in
+            login(request, owner) 
             return redirect('admin_deleted_comments', channel_id=owner.channel_id) 
         else:
             messages.error(request, "Invalid username or password.")
@@ -77,7 +77,7 @@ def user_login(request):
     return render(request, 'moderation/login.html')
 
 def user_logout(request):
-    logout(request)  # Log out the user
+    logout(request) 
     return redirect('home') 
 
 def contact(request):
@@ -88,9 +88,9 @@ def contact(request):
         # Prepare the email content
         subject = 'New Contact Form Submission'
         message = f'You have received a new message from {email}.\n\nDescription:\n{description}'
-        from_email = 'mihailstankevich15@gmail.com'  # Your email address
+        from_email = 'mihailstankevich15@gmail.com'
 
-        # Send the email
+        
         try:
             send_mail(subject, message, from_email, ['mihailstankevich15@gmail.com'])  
             messages.success(request, "Your message has been sent successfully! We will get in touch with you soon")
