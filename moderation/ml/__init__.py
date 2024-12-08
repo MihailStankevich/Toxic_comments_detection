@@ -1,4 +1,4 @@
-# moderation/ml/__init__.py
+
 import pickle
 import os
 
@@ -14,5 +14,5 @@ def load_model():
         model = pickle.load(f)
     return model, vectorizer
 
-# Load model and vectorizer when the module is imported
+
 model, vectorizer = load_model()

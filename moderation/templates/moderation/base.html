@@ -13,11 +13,11 @@
             <a href="{% url 'home' %}">
                 <img src="{% static 'moderation/logo.png' %}" alt="Logo" />
             </a>
-            <h1>SafeChannel</h1>
         </div>
         <div class="auth-links">
             {% if user.is_authenticated %}
                 <p>Hi, {{user.username}}</p>
+                <a href="{% url 'admin_deleted_comments' user.channel_id%}"><button>Access</button></a>
                 <form action="{% url 'logout' %}" method="post" style="display:inline;">
                     {% csrf_token %}
                     <button type="submit">Logout</button>
@@ -28,19 +28,20 @@
             {% endif %}
         </div>
     </header>
-    {% if messages %}
-    <ul class="error-messages">
-        {% for message in messages %}
-            <li>{{ message }}</li>
-        {% endfor %}
-    </ul>
-    {% endif %}
+    
     <main>
+        {% if messages %}
+        <ul class="error-messages">
+            {% for message in messages %}
+                <li>{{ message }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
         {% block content %}
         {% endblock %}
     </main>
     <footer>
-        <p>&copy; {{ current_year }} SafeChannel. All rights reserved.</p>
+        <p class='footer-text'>&copy; {{ current_year }} SafeChannel. All rights reserved.</p>
     </footer>
 </body>
 </html>
