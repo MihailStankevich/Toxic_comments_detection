@@ -7,13 +7,11 @@ from telegram.ext import Application, MessageHandler, filters, ContextTypes
 from moderation.ml import model, vectorizer
 from moderation.models import DeletedComment , Owner, BlockedUser
 def predict_comment(comment, vectorizer, model):
-    # Vectorize the input comment
+
     comment_vector = vectorizer.transform([comment])
-    
-    # Predict the class
+
     prediction = model.predict(comment_vector)
-    
-    # If needed, add a mapping for labels
+
     label_mapping = {0: "Non-offensive", 1: "Offensive"}
     return label_mapping.get(prediction[0], "Unknown")
 
@@ -31,12 +29,12 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ).select_related('owner') 
         
         blocked_user = await sync_to_async(blocked_user_queryset.first)() 
-        # Check if the blocked_user exists and is active
+
         if blocked_user and blocked_user.is_active():
             await update.message.reply_text("You are blocked from commenting.")
             await update.message.delete()
-            return  # Exit the function if the user is blocked
-         # Exit the function if the user is blocked
+            return  
+
         
         original_message = update.message.reply_to_message
         print(f"Message from supergroup: {update.message.text}")
@@ -67,7 +65,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # Main function to set up the bot
 async def main():
-    # Your bot token
+
     TOKEN = "8189505850:AAHtY32aECsTE9ODhQIHLiE2uLJV4htXU8E"
 
     # Create the application
@@ -79,7 +77,6 @@ async def main():
     # Start polling the bot
     await application.run_polling()
 
-# Run the bot
 if __name__ == "__main__":
     asyncio.run(main())
 

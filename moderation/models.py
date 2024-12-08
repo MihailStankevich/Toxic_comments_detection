@@ -42,7 +42,6 @@ class Owner(AbstractUser):
     )
     def __str__(self):
         return self.username
-          
 class DeletedComment(models.Model):
     comment = models.CharField(max_length=400)
     user = models.CharField(max_length=400)
