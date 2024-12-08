@@ -2,6 +2,7 @@
 html, body {
     height: 100%; /* Ensure the body takes the full height */
     margin: 0; /* Remove default margin */
+    
 }
 body {
     display: flex;
@@ -31,7 +32,7 @@ header {
     align-items: center; /* Center buttons vertically */
 }
 h1 {
-    color: #007BFF;
+    color: #1b1e21;
     text-align: center; /* Center the text of the heading */
     margin-bottom: 20px; /* Add some space below the heading */
 }
@@ -65,14 +66,19 @@ main {
     flex-direction: column; /* Stack content vertically */
     justify-content: center; 
     align-items: center;
-    padding: 20px; /* Add padding to main content */
+    padding: 20px; 
+    background-color: #cdeaf9;
 }
 
 footer {
     text-align: center;
     padding: 20px;
-    background-color: #f1f1f1;
-    width: 100%; /* Make sure the footer takes the full width */
+    background-color: #cdeaf9;
+    width: 100%; 
+    border-top: 2px solid #7497bc;
+}
+.footer-text{
+    color: black;
 }
 
 
@@ -115,7 +121,8 @@ label {
 .error-messages {
     color: red; /* Color for error messages */
     list-style-type: none; /* Remove bullet points */
-    padding: 0; /* Remove padding */
+    padding: 0; 
+    background-color: #cdeaf9;
 }
 
 table {
@@ -126,14 +133,16 @@ table {
 
 th, td {
     border: 1px solid #ddd; /* Border for table cells */
-    padding: 8px; /* Padding inside cells */
+    padding: 15px; /* Padding inside cells */
     text-align: left; /* Align text to the left */
 }
 
 th {
     background-color: #f2f2f2; /* Light gray background for header */
 }
-
+tr{
+    background-color: #f2f2f2;
+}
 tr:hover {
     background-color: #f1f1f1; /* Highlight row on hover */
 }
@@ -166,10 +175,6 @@ form {
 }
 
 
-.comment-container {
-    display: flex; /* Use flexbox for alignment */
-    align-items: center; /* Center items vertically */
-}
 
 .comment-cell {
     display: inline-block; /* Allow the cell to behave like an inline element */
@@ -187,3 +192,81 @@ form {
 }
 
 
+.home-container {
+    text-align: center; /* Center the text */
+    margin: 20px; /* Add some margin */
+}
+
+.contact-form-container {
+    width: 60vh; /* Set a max width for the form */
+    margin: 0 auto; /* Center the form */
+    padding: 20px; /* Add padding */
+    background-color: #f9f9f9; /* Light background color */
+    border-radius: 8px; /* Rounded corners */
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+}
+
+.home-container {
+    width: 80vh; /* Limit width for better readability */
+    margin: 40px auto; /* Center the container */
+    padding: 20px; /* Add padding */
+    background-color: #ffffff; /* White background for the content */
+    border-radius: 8px; /* Rounded corners */
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+}
+
+/* Headings */
+h2 {
+    color: #333; /* Darker color for headings */
+    margin-bottom: 20px; /* Space below heading */
+}
+
+h3 {
+    color: #007BFF; /* Use a primary color for subheadings */
+}
+
+/* Contact Form */
+.contact-form-container {
+    margin-top: 20px; 
+    /* Space above the form */
+}
+
+.form-group {
+    margin-bottom: 15px; /* Space between form groups */
+}
+
+.form-input {
+    width: 100%; /* Full width inputs */
+    padding: 10px; /* Padding inside inputs */
+    border: 1px solid #ccc; /* Border color */
+    border-radius: 4px; /* Rounded corners for inputs */
+    box-sizing: border-box; /* Include padding and border in width */
+}
+
+.form-button {
+    background-color: #007BFF; /* Primary button color */
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    cursor: pointer;
+    border-radius: 5px;
+    margin-top: 10px; /* Space above button */
+}
+
+.form-button:hover {
+    background-color: #0056b3; /* Darker shade on hover */
+}
+
+/* Error Messages */
+.error-messages {
+    color: red; /* Color for error messages */
+    list-style-type: none; /* Remove bullet points */
+    padding: 0; /* Remove padding */
+    margin-top: 10px; /* Space above error messages */
+}
+
+.comment-container {
+    display: flex; /* Use flexbox for alignment */
+    justify-content: space-between; /* Space between comment text and button */
+    align-items: center; /* Center items vertically */
+}

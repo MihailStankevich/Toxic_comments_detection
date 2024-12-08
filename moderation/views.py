@@ -10,6 +10,8 @@ from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from django.core.paginator import Paginator
 
+from django.core.mail import send_mail
+
 @login_required
 def admin_deleted_comments(request, channel_id):
     deleted_comments = DeletedComment.objects.filter(channel_id=channel_id).order_by('-deleted_at')
@@ -77,3 +79,24 @@ def user_login(request):
 def user_logout(request):
     logout(request)  # Log out the user
     return redirect('home') 
+
+def contact(request):
+    if request.method == 'POST':
+        email = request.POST.get('email')
+        description = request.POST.get('description', '')
+
+        # Prepare the email content
+        subject = 'New Contact Form Submission'
+        message = f'You have received a new message from {email}.\n\nDescription:\n{description}'
+        from_email = 'mihailstankevich15@gmail.com'  # Your email address
+
+        # Send the email
+        try:
+            send_mail(subject, message, from_email, ['mihailstankevich15@gmail.com'])  
+            messages.success(request, "Your message has been sent successfully! We will get in touch with you soon")
+        except Exception as e:
+            messages.error(request, "There was an error sending your message. Please try again later.")  # Log the error for debugging
+
+        return redirect('home') 
+
+    return render(request, 'moderation/home.html')
