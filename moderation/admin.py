@@ -8,7 +8,7 @@ class DeletedCommentAdmin(admin.ModelAdmin):
     search_fields = ('comment','user')  # Add search capability for the comment text
 class BlockedUserAdmin(admin.ModelAdmin):
     list_display = ('username', 'owner', 'blocked_at', 'expires_at', 'is_active')
-    list_filter = ('owner', 'blocked_at', 'expires_at')
+    list_filter = ('owner','comment', 'blocked_at', 'expires_at')
     search_fields = ('user',)
 
     def is_active(self, obj):

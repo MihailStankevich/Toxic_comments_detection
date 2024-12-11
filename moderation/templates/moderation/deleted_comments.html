@@ -3,10 +3,8 @@
 {% block title %}Deleted Comments{% endblock %}
 
 {% block content %}
-
-    <h1>Deleted Comments</h1>
     <form method="GET" action="{% url 'admin_deleted_comments' channel_id %}" class="search-form">
-        <input type="text" name="search" placeholder="Search by post's text" value="{{ search_query }}" class="search-input">
+        <input type="text" name="search" placeholder="Search by post or user" value="{{ search_query }}" class="search-input">
         <button type="submit">Search</button>
     </form>
     
@@ -18,6 +16,7 @@
                 <th>Post Text</th>
                 <th>Deleted On</th>
                 <th>Is blocked(✔/✖)</th>
+                <th>Block the user(minutes)</th>
             </tr>
         </thead>
         <tbody>
@@ -45,11 +44,16 @@
                                 ✖ 
                             {% endif %}
                         </span>
-                        <form method="POST" action="{% url 'block_user' comment.user %}">
-                            {% csrf_token %}
-                            <input type="number" name="block_duration" min="1" required>
-                            <button type="submit">Block User (minutes)</button>
-                        </form>
+                    </td>
+                    <td>
+                        <div class="block-user-form">
+                            <form method="POST" action="{% url 'block_user' comment.user %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="comment_id" value="{{ comment.id }}">
+                                <input type="number" name="block_duration" min="1" required placeholder="Min" title="Block duration in minutes">
+                                <button type="submit">Block</button>
+                            </form>
+                        </div>
                     </td>
                 </tr>
             {% empty %}
@@ -59,6 +63,7 @@
             {% endfor %}
         </tbody>
     </table>
+    <a href="{% url 'blocked_users' user.channel_id%}"><button>See all blocked users</button></a>
     <div class="pagination-container">
         {% if deleted_comments.has_previous %}
             <button><a href="?page={{ deleted_comments.previous_page_number }}&search={{ search_query }}" class="form-button">Previous</a></button>

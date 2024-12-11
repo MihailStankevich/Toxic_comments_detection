@@ -1,0 +1,37 @@
+{% extends 'moderation/base.html' %}
+
+{% block title %}Blocked users{% endblock %}
+
+{% block content %}
+<h1>Blocked users</h1>
+<p>There are {{total}} users blocked
+
+<table>
+    <thead>
+        <tr>
+            <th>Username</th>
+            <th>Blocked at</th>
+            <th>Expires at</th>
+            <th>Comment</th>
+            <th>Remaining time</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for user in blocked_users %}
+            <tr>
+                <td>{{ user.username }}</td>
+                <td>{{ user.blocked_at }}</td>
+                <td>{{ user.expires_at }}</td>
+                <td>{{ user.comment.comment|truncatechars:50 }}</td>
+                <td>
+                    {{ user.remaining_time_display }}
+                </td>
+            </tr>
+        {% empty %}
+            <tr>
+                <td colspan="5">No blocked users found.</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
