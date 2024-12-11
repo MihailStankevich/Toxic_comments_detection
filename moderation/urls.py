@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import admin_deleted_comments, home, user_login, register, user_logout, block_user, contact
+from .views import admin_deleted_comments, home, user_login, register, user_logout, block_user, contact, blocked_users
 
 urlpatterns = [
     path('', home, name='home'),
@@ -9,4 +9,5 @@ urlpatterns = [
     path('logout', user_logout, name='logout'),
     path('block_user/<str:username>/', block_user, name='block_user'),
     path('contact/', contact, name='contact'),
+    path('blocked_users/<str:channel_id>/', blocked_users, name='blocked_users'),
 ]

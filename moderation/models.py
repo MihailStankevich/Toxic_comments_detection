@@ -58,6 +58,7 @@ class BlockedUser(models.Model):
     owner = models.ForeignKey(Owner, on_delete=models.CASCADE, related_name='blocked_users')
     blocked_at = models.DateTimeField(auto_now_add=True)
     expires_at = models.DateTimeField()
+    comment = models.ForeignKey(DeletedComment, on_delete=models.CASCADE, null=True, blank=True)
 
     def is_active(self):
         return timezone.now() < self.expires_at

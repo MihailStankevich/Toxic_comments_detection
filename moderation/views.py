@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect
-from .models import DeletedComment, BlockedUser
+from .models import DeletedComment, BlockedUser, Owner
 
 from django.contrib import messages
 from .forms import OwnerRegistrationForm
@@ -10,14 +10,20 @@ from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from django.core.paginator import Paginator
 
+from django.db.models import Q
 from django.core.mail import send_mail
+
+def home(request):
+    return render(request, 'moderation/home.html')
 
 @login_required
 def admin_deleted_comments(request, channel_id):
     deleted_comments = DeletedComment.objects.filter(channel_id=channel_id).order_by('-deleted_at')
     search_query = request.GET.get('search', '')
     if search_query:
-        deleted_comments = deleted_comments.filter(post__icontains=search_query)
+        deleted_comments = deleted_comments.filter(
+            Q(post__icontains=search_query) | Q(user__icontains=search_query)
+        )
 
     paginator = Paginator(deleted_comments, 5)  # Show 5 comments per page
     page_number = request.GET.get('page', 1)  # Get the current page number
@@ -27,8 +33,20 @@ def admin_deleted_comments(request, channel_id):
 
     return render(request, 'moderation/deleted_comments.html', {'deleted_comments': comments_page, "channel_id": channel_id, "blocked_users": blocked_users})
 
-def home(request):
-    return render(request, 'moderation/home.html')
+@login_required
+def blocked_users(request,channel_id):
+    owner = Owner.objects.get(channel_id=channel_id)
+    blocked_users = BlockedUser.objects.filter(owner=owner, expires_at__gt=timezone.now())
+
+    total = blocked_users.count()
+    for user in blocked_users:
+        remaining_time = user.expires_at - timezone.now()  # Calculate remaining time
+        total_seconds = int(remaining_time.total_seconds())
+        days, remainder = divmod(total_seconds, 86400)
+        hours, remainder = divmod(total_seconds, 3600)
+        minutes, seconds = divmod(remainder, 60)
+        user.remaining_time_display = f"{days}d {hours}h {minutes}m {seconds}s" if days > 0 else f"{hours}h {minutes}m {seconds}s"
+    return render(request, 'moderation/blocked_users.html',{'blocked_users': blocked_users, 'total': total})
 
 @login_required
 def block_user(request, username):
@@ -36,12 +54,16 @@ def block_user(request, username):
         block_duration = int(request.POST.get('block_duration', 5))  # Default to 5min
         expires_at = timezone.now() + timezone.timedelta(minutes=block_duration)
 
-        
+        comment_id = request.POST.get('comment_id') 
+        comment = DeletedComment.objects.get(id=comment_id) if comment_id else None
+
         BlockedUser.objects.update_or_create(
             username=username,
             defaults={
                 'owner': request.user,  
-                'expires_at': expires_at
+                'comment': comment,
+                'expires_at': expires_at,
+                'blocked_at': timezone.now()
             }
         )
         messages.success(request, f"User {username} has been blocked for {block_duration} minutes.")
@@ -100,3 +122,5 @@ def contact(request):
         return redirect('home') 
 
     return render(request, 'moderation/home.html')
+
+
