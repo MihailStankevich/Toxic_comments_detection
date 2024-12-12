@@ -10,9 +10,9 @@
     <thead>
         <tr>
             <th>Username</th>
+            <th>Comment</th>
             <th>Blocked at</th>
             <th>Expires at</th>
-            <th>Comment</th>
             <th>Remaining time</th>
         </tr>
     </thead>
@@ -20,9 +20,9 @@
         {% for user in blocked_users %}
             <tr>
                 <td>{{ user.username }}</td>
+                <td>{{ user.comment.comment|truncatechars:50 }}</td>
                 <td>{{ user.blocked_at }}</td>
                 <td>{{ user.expires_at }}</td>
-                <td>{{ user.comment.comment|truncatechars:50 }}</td>
                 <td>
                     {{ user.remaining_time_display }}
                 </td>
@@ -34,4 +34,5 @@
         {% endfor %}
     </tbody>
 </table>
+<a href="{% url 'admin_deleted_comments' user.channel_id%}"><button>See Deleted Comments</button></a>
 {% endblock %}

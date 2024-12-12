@@ -80,6 +80,7 @@ footer {
     background-color: #cdeaf9;
     width: 100%; 
     border-top: 2px solid #7497bc;
+    box-sizing: border-box;
 }
 .footer-text{
     color: black;
