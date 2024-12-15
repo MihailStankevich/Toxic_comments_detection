@@ -14,6 +14,7 @@
             <th>Blocked at</th>
             <th>Expires at</th>
             <th>Remaining time</th>
+            <th>Unblock</th>
         </tr>
     </thead>
     <tbody>
@@ -25,6 +26,12 @@
                 <td>{{ user.expires_at }}</td>
                 <td>
                     {{ user.remaining_time_display }}
+                </td>
+                <td>
+                    <form action="{% url 'unblock_user' user.username %}" method="post">
+                        {% csrf_token %}
+                        <button type="submit">Unblock</button>
+                    </form>
                 </td>
             </tr>
         {% empty %}

@@ -63,17 +63,17 @@
             {% endfor %}
         </tbody>
     </table>
-    <a href="{% url 'blocked_users' user.channel_id%}"><button>See all blocked users</button></a>
+    
     <div class="pagination-container">
         {% if deleted_comments.has_previous %}
-            <button><a href="?page={{ deleted_comments.previous_page_number }}&search={{ search_query }}" class="form-button">Previous</a></button>
+            <a href="?page={{ deleted_comments.previous_page_number }}&search={{ search_query }}"><button>Previous page</button></a>
         {% endif %}
         
         {% if deleted_comments.has_next %}
-    <button><a href="?page={{ deleted_comments.next_page_number }}&search={{ search_query }}" class="form-button">Load More</a></button>
+    <a href="?page={{ deleted_comments.next_page_number }}&search={{ search_query }}"><button>Next page</button></a>
         {% endif %}
     </div>
-
+    <a href="{% url 'blocked_users' user.channel_id%}"><button>See all blocked users</button></a>
     <script>
         function toggleComment(commentId) {
             var fullComment = document.getElementById(commentId);
