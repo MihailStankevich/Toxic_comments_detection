@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from .models import DeletedComment, BlockedUser, Owner
 
 from django.contrib import messages
@@ -68,7 +68,19 @@ def block_user(request, username):
         )
         messages.success(request, f"User {username} has been blocked for {block_duration} minutes.")
         return redirect('admin_deleted_comments', channel_id=request.user.channel_id)
-
+    
+@login_required
+def unblock_user(request, username):
+    if request.method == 'POST':
+        # Get the blocked user instance
+        blocked_user = get_object_or_404(BlockedUser , username=username, owner=request.user)
+        
+        # Delete the blocked user record
+        blocked_user.delete()
+        messages.success(request, f'User  {username} has been unblocked successfully.')
+        
+        # Redirect to the blocked users page with a success message
+        return redirect('blocked_users', channel_id=request.user.channel_id)
 
 def register(request):
     if request.method == 'POST':
