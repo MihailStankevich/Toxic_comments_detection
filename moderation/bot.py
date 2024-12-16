@@ -4,13 +4,13 @@ import asyncio
 from asgiref.sync import sync_to_async
 from telegram import Update
 from telegram.ext import Application, MessageHandler, filters, ContextTypes
-from moderation.ml import model, vectorizer
+from moderation.ml import model
 from moderation.models import DeletedComment , Owner, BlockedUser
-def predict_comment(comment, vectorizer, model):
+def predict_comment(comment, model):
 
-    comment_vector = vectorizer.transform([comment])
+    #comment_vector = vectorizer.transform([comment])
 
-    prediction = model.predict(comment_vector)
+    prediction = model.predict([comment])
 
     label_mapping = {0: "Non-offensive", 1: "Offensive"}
     return label_mapping.get(prediction[0], "Unknown")
@@ -38,7 +38,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         
         original_message = update.message.reply_to_message
         print(f"Message from supergroup: {update.message.text}")
-        result = predict_comment(update.message.text, vectorizer, model)
+        result = predict_comment(update.message.text, model)
         print(result)
         
         

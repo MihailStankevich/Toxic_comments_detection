@@ -23,9 +23,19 @@
                 <td>{{ user.username }}</td>
                 <td>{{ user.comment.comment|truncatechars:50 }}</td>
                 <td>{{ user.blocked_at }}</td>
-                <td>{{ user.expires_at }}</td>
                 <td>
-                    {{ user.remaining_time_display }}
+                    {% if user.is_permanent %}
+                        <span>Permanent Block</span>
+                    {% else %}
+                        {{ user.expires_at }}
+                    {% endif %}
+                </td>
+                <td>
+                    {% if user.is_permanent %}
+                        <span>Permanent Block</span>
+                    {% else %}
+                        {{ user.remaining_time_display }}
+                    {% endif %}
                 </td>
                 <td>
                     <form action="{% url 'unblock_user' user.username %}" method="post">

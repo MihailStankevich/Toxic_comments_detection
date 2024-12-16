@@ -50,8 +50,14 @@
                             <form method="POST" action="{% url 'block_user' comment.user %}">
                                 {% csrf_token %}
                                 <input type="hidden" name="comment_id" value="{{ comment.id }}">
-                                <input type="number" name="block_duration" min="1" required placeholder="Min" title="Block duration in minutes">
-                                <button type="submit">Block</button>
+                                <div class="form-group">
+                                    <input type="number" name="block_duration" id='block_duration' min="1" placeholder="Min" title="Block duration in minutes" required class="form-input-1 block-duration">
+                                    <button type="submit">Block</button>
+                                </div>
+                                <div class="checkbox-container">
+                                    <input type="checkbox" name="is_permanent" id="is_permanent" class="checkbox-input is-permanent">
+                                    <label for="is_permanent" class="checkbox-label">Permanent Block</label>
+                                </div>
                             </form>
                         </div>
                     </td>
@@ -82,6 +88,18 @@
             } else {
                 fullComment.style.display = "none";
             }
-        }
+        };
+        document.querySelectorAll('.is-permanent').forEach(function(checkbox) {
+            checkbox.addEventListener('change', function() {
+                const row = this.closest('tr'); // Get the closest row
+                const durationInput = row.querySelector('.block-duration'); // Find the duration input in the same row
+                if (this.checked) {
+                    durationInput.value = ''; // Clear the input if permanent block is checked
+                    durationInput.removeAttribute('required'); // Remove required attribute
+                } else {
+                    durationInput.setAttribute('required', 'required'); // Add required attribute back
+                }
+            });
+        });
     </script>
 {% endblock %}

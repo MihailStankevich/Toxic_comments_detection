@@ -5,8 +5,8 @@ import os
 # Load model and vectorizer
 def load_model():
     base_dir = os.path.dirname(os.path.abspath(__file__)) 
-    model_path = os.path.join(base_dir, 'rfmodel.pkl')  
-    vectorizer_path = os.path.join(base_dir, 'vectorizer.pkl')
+    model_path = os.path.join(base_dir, 'svc1.pkl')  #сейчас это пайплайн который включает в себя и модель и векторайзер
+    vectorizer_path = os.path.join(base_dir, 'vectorizer.pkl') #эта строка не имеет смысла сейчас
 
     with open(vectorizer_path, 'rb') as f:
         vectorizer = pickle.load(f)
