@@ -28,31 +28,43 @@ def admin_deleted_comments(request, channel_id):
     paginator = Paginator(deleted_comments, 5)  # Show 5 comments per page
     page_number = request.GET.get('page', 1)  # Get the current page number
     comments_page = paginator.get_page(page_number) 
-
-    blocked_users = BlockedUser .objects.filter(owner=request.user, expires_at__gt=timezone.now()).values_list('username', flat=True)
-
+    blocked_users = BlockedUser .objects.filter(
+        owner=request.user
+    ).filter(
+        Q(is_permanent=True) | Q(expires_at__gt=timezone.now())
+    ).values_list('username', flat=True)
     return render(request, 'moderation/deleted_comments.html', {'deleted_comments': comments_page, "channel_id": channel_id, "blocked_users": blocked_users})
 
 @login_required
 def blocked_users(request,channel_id):
     owner = Owner.objects.get(channel_id=channel_id)
-    blocked_users = BlockedUser.objects.filter(owner=owner, expires_at__gt=timezone.now())
+    blocked_users = BlockedUser .objects.filter(
+        owner=request.user
+    ).filter(
+        Q(is_permanent=True) | Q(expires_at__gt=timezone.now())
+    )
 
     total = blocked_users.count()
     for user in blocked_users:
-        remaining_time = user.expires_at - timezone.now()  # Calculate remaining time
-        total_seconds = int(remaining_time.total_seconds())
-        days, remainder = divmod(total_seconds, 86400)
-        hours, remainder = divmod(total_seconds, 3600)
-        minutes, seconds = divmod(remainder, 60)
-        user.remaining_time_display = f"{days}d {hours}h {minutes}m {seconds}s" if days > 0 else f"{hours}h {minutes}m {seconds}s"
+        if user.is_permanent == True:
+            pass
+        else:
+            remaining_time = user.expires_at - timezone.now()  # Calculate remaining time
+            total_seconds = int(remaining_time.total_seconds())
+            days, remainder = divmod(total_seconds, 86400)
+            hours, remainder = divmod(total_seconds, 3600)
+            minutes, seconds = divmod(remainder, 60)
+            user.remaining_time_display = f"{days}d {hours}h {minutes}m {seconds}s" if days > 0 else f"{hours}h {minutes}m {seconds}s"
     return render(request, 'moderation/blocked_users.html',{'blocked_users': blocked_users, 'total': total})
 
 @login_required
 def block_user(request, username):
     if request.method == 'POST':
-        block_duration = int(request.POST.get('block_duration', 5))  # Default to 5min
-        expires_at = timezone.now() + timezone.timedelta(minutes=block_duration)
+        block_duration = request.POST.get('block_duration')
+        is_permanent = request.POST.get('is_permanent') == 'on'
+        expires_at = None
+        if not is_permanent:
+            expires_at = timezone.now() + timezone.timedelta(minutes=int(block_duration))
 
         comment_id = request.POST.get('comment_id') 
         comment = DeletedComment.objects.get(id=comment_id) if comment_id else None
@@ -63,10 +75,14 @@ def block_user(request, username):
                 'owner': request.user,  
                 'comment': comment,
                 'expires_at': expires_at,
+                'is_permanent': is_permanent,
                 'blocked_at': timezone.now()
             }
         )
-        messages.success(request, f"User {username} has been blocked for {block_duration} minutes.")
+        if not is_permanent:
+            messages.success(request, f"User {username} has been blocked for {block_duration} minutes.")
+        else:
+            messages.success(request, f"User {username} has been permanently blocked.")
         return redirect('admin_deleted_comments', channel_id=request.user.channel_id)
     
 @login_required

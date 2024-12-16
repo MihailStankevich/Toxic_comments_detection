@@ -57,10 +57,13 @@ class BlockedUser(models.Model):
     username = models.CharField(max_length=200)
     owner = models.ForeignKey(Owner, on_delete=models.CASCADE, related_name='blocked_users')
     blocked_at = models.DateTimeField(auto_now_add=True)
-    expires_at = models.DateTimeField()
+    expires_at = models.DateTimeField(null=True, blank=True)
     comment = models.ForeignKey(DeletedComment, on_delete=models.CASCADE, null=True, blank=True)
+    is_permanent = models.BooleanField(default=False)
 
     def is_active(self):
+        if self.is_permanent:
+            return True
         return timezone.now() < self.expires_at
     
     def __str__(self):
