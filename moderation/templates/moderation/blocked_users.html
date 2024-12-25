@@ -21,7 +21,17 @@
         {% for user in blocked_users %}
             <tr>
                 <td>{{ user.username }}</td>
-                <td>{{ user.comment.comment|truncatechars:50 }}</td>
+                <td>
+                    <div class="comment-container">
+                        <span class="comment-cell">
+                            {{ user.comment.comment|truncatechars:50 }}
+                        </span>
+                        <button onclick="toggleComment('full-comment-{{ forloop.counter }}')">Show the comment</button>
+                    </div>
+                    <div id="full-comment-{{ forloop.counter }}" class="full-comment" style="display:none;">
+                        {{ user.comment.comment }}
+                    </div>
+                </td>
                 <td>{{ user.blocked_at }}</td>
                 <td>
                     {% if user.is_permanent %}
@@ -52,4 +62,14 @@
     </tbody>
 </table>
 <a href="{% url 'admin_deleted_comments' user.channel_id%}"><button>See Deleted Comments</button></a>
+<script>
+    function toggleComment(commentId) {
+        var fullComment = document.getElementById(commentId);
+        if (fullComment.style.display === "none" || fullComment.style.display === "") {
+            fullComment.style.display = "block";
+        } else {
+            fullComment.style.display = "none";
+        }
+    };
+</script>
 {% endblock %}

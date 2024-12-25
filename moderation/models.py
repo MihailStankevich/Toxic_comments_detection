@@ -3,22 +3,7 @@ from django.contrib.auth.models import AbstractUser,Group, Permission
 from django.utils import timezone
 from datetime import timedelta
 # Create your models here.
-''' 
-class Post(models.Model):
-    title = models.CharField(max_length=255)
-    content = models.TextField()
-    created_at = models.DateTimeField(auto_now_add=True)
 
-    def __str__(self):
-        return self.title
-   
-class User_profile(models.Model):
-    user_id = models.OneToOneField(User, on_delete=models.CASCADE)
-    name = models.CharField(max_length=255)
-
-    def __str__(self):
-        return self.name
- '''  
 class Owner(AbstractUser):
     username = models.EmailField(("email address"), unique=True)
     channel_id = models.CharField(max_length=100, unique=True)
@@ -26,7 +11,7 @@ class Owner(AbstractUser):
 
     groups = models.ManyToManyField(
         Group,
-        related_name='owner_set',  # Change this to something unique
+        related_name='owner_set', 
         blank=True,
         help_text='The groups this user belongs to. A user will get all permissions '
                   'granted to each of their groups.',
@@ -35,7 +20,7 @@ class Owner(AbstractUser):
     
     user_permissions = models.ManyToManyField(
         Permission,
-        related_name='owner_set',  # Change this to something unique
+        related_name='owner_set', 
         blank=True,
         help_text='Specific permissions for this user.',
         verbose_name='user permissions',
