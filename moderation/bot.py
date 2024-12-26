@@ -66,10 +66,11 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 comment=update.message.text.lower(),
                 user=update.message.from_user.username.lower(),
                 channel_id=str(update.message.chat.id),
-                owner = owner
+                owner = owner,
+                detected_by = 'Comment text'
             )
             await update.message.delete()
-            print(f'The comment -{update.message.text}- was deleted')
+            print(f'The comment -{update.message.text}- was deleted because it had been classified as spam/offensive by text')
 
             #checking the profile image
         else:
@@ -85,7 +86,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
                     image_result = classify_image(photo_path, image_model)
 
-                    os.remove(photo_path)  # Clean up
+                    os.remove(photo_path)  # Clean up from my directory
                     print(f"Image result: {image_result}")
 
                     if image_result == 'Spam':
@@ -100,7 +101,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                             comment=update.message.text.lower(),
                             user=update.message.from_user.username.lower(),
                             channel_id=str(update.message.chat.id),
-                            owner = owner
+                            owner = owner,
+                            detected_by = 'Profile picture'
                         )
                         await update.message.delete()
                         print(f'The comment -{update.message.text}- was deleted because it had been classified as spam by image')

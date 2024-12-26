@@ -12,6 +12,7 @@
         <thead>
             <tr>
                 <th>Comment</th>
+                <th>Detected by</th>
                 <th>From User</th>
                 <th>Post Text</th>
                 <th>Deleted On</th>
@@ -33,6 +34,7 @@
                             {{ comment.comment }}
                         </div>
                     </td>
+                    <td>{{ comment.detected_by }}</td>
                     <td>{{ comment.user }}</td>
                     <td>{{ comment.post }}</td>
                     <td>{{ comment.deleted_at }}</td>
