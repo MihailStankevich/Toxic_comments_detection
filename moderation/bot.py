@@ -1,6 +1,8 @@
 import requests
 import tensorflow as tf
 import os
+from dotenv import load_dotenv
+
 import nest_asyncio
 import asyncio
 from asgiref.sync import sync_to_async
@@ -8,6 +10,8 @@ from telegram import Update
 from telegram.ext import Application, MessageHandler, filters, ContextTypes
 from moderation.ml import model, image_model
 from moderation.models import DeletedComment , Owner, BlockedUser
+load_dotenv()
+token = os.getenv('TOKEN')
 def predict_comment(comment, model):
 
     #comment_vector = vectorizer.transform([comment])
@@ -71,7 +75,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
             await update.message.delete()
             print(f'The comment -{update.message.text}- was deleted because it had been classified as spam/offensive by text')
-
+            
             #checking the profile image
         else:
             try:
@@ -116,7 +120,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # Main function to set up the bot
 async def main():
 
-    TOKEN = "8189505850:AAHtY32aECsTE9ODhQIHLiE2uLJV4htXU8E"
+    TOKEN = token
 
     # Create the application
     application = Application.builder().token(TOKEN).build()
