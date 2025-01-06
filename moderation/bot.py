@@ -65,13 +65,16 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 post_text = f"{original_message.text[:20]}..."
             else:
                 post_text = "No text"
+            sent_from = update.message.from_user
+            profile_link = f"https://t.me/{sent_from.username}" if sent_from.username else f"tg://user?id={sent_from.id}"
             await sync_to_async(DeletedComment.objects.create)(
                 post=post_text.lower(),
                 comment=update.message.text.lower(),
                 user=update.message.from_user.username.lower(),
                 channel_id=str(update.message.chat.id),
                 owner = owner,
-                detected_by = 'Comment text'
+                detected_by = 'Comment text',
+                profile_link=profile_link
             )
             await update.message.delete()
             print(f'The comment -{update.message.text}- was deleted because it had been classified as spam/offensive by text')
@@ -100,13 +103,16 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                             post_text = f"{original_message.text[:20]}..."
                         else:
                             post_text = "No text"
+                        sent_from = update.message.from_user
+                        profile_link = f"https://t.me/{sent_from.username}" if sent_from.username else f"tg://user?id={sent_from.id}"
                         await sync_to_async(DeletedComment.objects.create)(
                             post=post_text.lower(),
                             comment=update.message.text.lower(),
                             user=update.message.from_user.username.lower(),
                             channel_id=str(update.message.chat.id),
                             owner = owner,
-                            detected_by = 'Profile picture'
+                            detected_by = 'Profile picture',
+                            profile_link=profile_link
                         )
                         await update.message.delete()
                         print(f'The comment -{update.message.text}- was deleted because it had been classified as spam by image')
