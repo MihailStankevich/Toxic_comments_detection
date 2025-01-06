@@ -12,7 +12,12 @@ from django.core.paginator import Paginator
 
 from django.db.models import Q
 from django.core.mail import send_mail
+from django.views.generic import View
+from django.http import HttpResponse
 
+class FaviconView(View):
+    def get(self, request):
+        return HttpResponse(status=204)
 def home(request):
     return render(request, 'moderation/home.html')
 

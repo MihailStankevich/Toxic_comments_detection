@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import admin_deleted_comments, home, user_login, register, user_logout, block_user, contact, blocked_users,unblock_user
+from .views import FaviconView,admin_deleted_comments, home, user_login, register, user_logout, block_user, contact, blocked_users,unblock_user
 
 urlpatterns = [
     path('', home, name='home'),
@@ -11,4 +11,5 @@ urlpatterns = [
     path('contact/', contact, name='contact'),
     path('blocked_users/<str:channel_id>/', blocked_users, name='blocked_users'),
     path('unblock/<str:username>/', unblock_user, name='unblock_user'),
+    path('favicon.ico', FaviconView.as_view(), name='favicon'),
 ]

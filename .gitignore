@@ -5,3 +5,4 @@ __pycache__/
 # Ignore environment variables
 .env
 venv/
+/staticfiles/
