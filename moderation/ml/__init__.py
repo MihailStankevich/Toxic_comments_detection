@@ -1,7 +1,10 @@
 import tensorflow as tf
 import pickle
 import os
-import joblib
+import django
+# Set DJANGO_SETTINGS_MODULE
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'channelmoderation.settings')
+django.setup()
 
 # Load model and vectorizer
 def load_model():
