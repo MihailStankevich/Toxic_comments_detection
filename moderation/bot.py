@@ -3,7 +3,7 @@ import tensorflow as tf
 import os
 import django
 from dotenv import load_dotenv
-
+import tempfile
 import nest_asyncio
 import asyncio
 from asgiref.sync import sync_to_async
@@ -92,34 +92,32 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 if profile_photos.photos:
                     largest_photo = max(profile_photos.photos[0], key=lambda x: x.width)
                     file = await context.bot.get_file(largest_photo.file_id)
-                    photo_path = f"profile_photos/{user_id}_profile_photo.jpg"
-                    await file.download_to_drive(photo_path)
+                    with tempfile.NamedTemporaryFile(suffix=".jpg") as temp_file:
+                        await file.download_to_drive(temp_file.name) 
+                        image_result = classify_image(temp_file.name, image_model)
 
-                    image_result = classify_image(photo_path, image_model)
+                        print(f"Image result: {image_result}")
 
-                    os.remove(photo_path)  # Clean up from my directory
-                    print(f"Image result: {image_result}")
-
-                    if image_result == 'Spam':
-                        if original_message.caption:
-                            post_text = f"{original_message.caption[:20]}..."
-                        elif original_message.text:
-                            post_text = f"{original_message.text[:20]}..."
-                        else:
-                            post_text = "No text"
-                        sent_from = update.message.from_user
-                        profile_link = f"https://t.me/{sent_from.username}" if sent_from.username else f"tg://user?id={sent_from.id}"
-                        await sync_to_async(DeletedComment.objects.create)(
-                            post=post_text.lower(),
-                            comment=update.message.text.lower(),
-                            user=update.message.from_user.username.lower(),
-                            channel_id=str(update.message.chat.id),
-                            owner = owner,
-                            detected_by = 'Profile picture',
-                            profile_link=profile_link
-                        )
-                        await update.message.delete()
-                        print(f'The comment -{update.message.text}- was deleted because it had been classified as spam by image')
+                        if image_result == 'Spam':
+                            if original_message.caption:
+                                post_text = f"{original_message.caption[:20]}..."
+                            elif original_message.text:
+                                post_text = f"{original_message.text[:20]}..."
+                            else:
+                                post_text = "No text"
+                            sent_from = update.message.from_user
+                            profile_link = f"https://t.me/{sent_from.username}" if sent_from.username else f"tg://user?id={sent_from.id}"
+                            await sync_to_async(DeletedComment.objects.create)(
+                                post=post_text.lower(),
+                                comment=update.message.text.lower(),
+                                user=update.message.from_user.username.lower(),
+                                channel_id=str(update.message.chat.id),
+                                owner = owner,
+                                detected_by = 'Profile picture',
+                                profile_link=profile_link
+                            )
+                            await update.message.delete()
+                            print(f'The comment -{update.message.text}- was deleted because it had been classified as spam by image')
                 else:
                     print("No profile photo available.")
                     
