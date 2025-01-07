@@ -69,7 +69,7 @@ def block_user(request, username):
         is_permanent = request.POST.get('is_permanent') == 'on'
         expires_at = None
         if not is_permanent:
-            expires_at = timezone.now() + timezone.timedelta(minutes=int(block_duration))
+            expires_at = timezone.now() + timezone.timedelta(hours=int(block_duration))
 
         comment_id = request.POST.get('comment_id') 
         comment = DeletedComment.objects.get(id=comment_id) if comment_id else None

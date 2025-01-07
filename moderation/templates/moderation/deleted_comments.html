@@ -17,7 +17,7 @@
                 <th>Post Text</th>
                 <th>Deleted On</th>
                 <th>Is blocked(✔/✖)</th>
-                <th>Block the user(minutes)</th>
+                <th>Block the user(hours)</th>
             </tr>
         </thead>
         <tbody>
@@ -53,7 +53,7 @@
                                 {% csrf_token %}
                                 <input type="hidden" name="comment_id" value="{{ comment.id }}">
                                 <div class="form-group">
-                                    <input type="number" name="block_duration" id='block_duration' min="1" placeholder="Min" title="Block duration in minutes" required class="form-input-1 block-duration">
+                                    <input type="number" name="block_duration" id='block_duration' min="1" placeholder="Hours" title="Block duration in minutes" required class="form-input-1 block-duration">
                                     <button type="submit">Block</button>
                                 </div>
                                 <div class="checkbox-container">

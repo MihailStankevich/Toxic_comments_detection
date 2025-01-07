@@ -48,7 +48,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         blocked_user = await sync_to_async(blocked_user_queryset.first)() 
 
         if blocked_user and blocked_user.is_active():
-            await update.message.reply_text("You are blocked from commenting.")
+            #await update.message.reply_text("You are blocked from commenting.")
             await update.message.delete()
             return  
 
