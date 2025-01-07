@@ -9,10 +9,10 @@ def load_model():
     model_path = os.path.join(base_dir, 'svc11.pkl')  #сейчас это пайплайн который включает в себя и модель и векторайзер
     image_model_path = os.path.join(base_dir, 'spam_image_classifier_model11.h5')
     with open(model_path, 'rb') as f:
-        try: model = joblib.load(f)
-        except Exception as e:
-            print(f"Error loading model: {e}")
+        model = pickle.load(f)
+        print("Text model loaded successfully.")
     image_model = tf.keras.models.load_model(image_model_path)
+    print("Image model loaded successfully.")
     return model, image_model
 
 
