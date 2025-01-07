@@ -1,6 +1,7 @@
 import requests
 import tensorflow as tf
 import os
+import django
 from dotenv import load_dotenv
 
 import nest_asyncio
@@ -8,6 +9,9 @@ import asyncio
 from asgiref.sync import sync_to_async
 from telegram import Update
 from telegram.ext import Application, MessageHandler, filters, ContextTypes
+# Set DJANGO_SETTINGS_MODULE
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'channelmoderation.settings')
+django.setup()
 from moderation.ml import model, image_model
 from moderation.models import DeletedComment , Owner, BlockedUser
 load_dotenv()
