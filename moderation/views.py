@@ -85,7 +85,7 @@ def block_user(request, username):
             }
         )
         if not is_permanent:
-            messages.success(request, f"User {username} has been blocked for {block_duration} minutes.")
+            messages.success(request, f"User {username} has been blocked for {block_duration} hours.")
         else:
             messages.success(request, f"User {username} has been permanently blocked.")
         return redirect('admin_deleted_comments', channel_id=request.user.channel_id)
