@@ -37,7 +37,7 @@ nest_asyncio.apply()
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
-    if update.message.chat.type == "supergroup":
+    if update.message.chat.type == "supergroup" and update.message.reply_to_message:
         owner = await sync_to_async(Owner.objects.get)(channel_id=str(update.message.chat.id))
 
         blocked_user_queryset = (BlockedUser .objects.filter)(
@@ -52,10 +52,10 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.delete()
             return  
 
-        if update.message.reply_to_message.reply_to_message:
-            original_message = update.message.reply_to_message.reply_to_message
-        else:
-            original_message = update.message.reply_to_message
+        
+        original_message = update.message.reply_to_message
+        while original_message.reply_to_message:
+            original_message = original_message.reply_to_message
         print(f"Message from supergroup: {update.message.text}")
         result = predict_comment(update.message.text, model)
         print(result)
