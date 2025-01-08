@@ -54,8 +54,17 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         
         original_message = update.message.reply_to_message
-        while original_message.reply_to_message:
-            original_message = original_message.reply_to_message
+        try:
+            while original_message and original_message.reply_to_message:
+                print(f"Current: {original_message.message_id}, Replying to: {original_message.reply_to_message.message_id}")
+                original_message = original_message.reply_to_message
+
+            # Print the final message ID identified as the original
+            print(f"Original post ID: {original_message.message_id}")
+
+        except AttributeError as e:
+            print(f"Error traversing reply chain: {e}")
+            return
         print(f"Message from supergroup: {update.message.text}")
         result = predict_comment(update.message.text, model)
         print(result)
