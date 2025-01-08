@@ -52,8 +52,10 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.delete()
             return  
 
-        
-        original_message = update.message.reply_to_message
+        if update.message.reply_to_message.reply_to_message:
+            original_message = update.message.reply_to_message.reply_to_message
+        else:
+            original_message = update.message.reply_to_message
         print(f"Message from supergroup: {update.message.text}")
         result = predict_comment(update.message.text, model)
         print(result)
