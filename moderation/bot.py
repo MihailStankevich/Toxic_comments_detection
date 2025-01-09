@@ -9,7 +9,9 @@ import asyncio
 from asgiref.sync import sync_to_async
 from telegram import Update
 from telegram.ext import Application, MessageHandler, filters, ContextTypes
-
+##############
+#  try to do by hashing
+##############
 # Set DJANGO_SETTINGS_MODULE
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'channelmoderation.settings')
 django.setup()
@@ -54,24 +56,11 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         
         original_message = update.message.reply_to_message
-        try:
-            while original_message and original_message.reply_to_message:
-                print(f"Current: {original_message.message_id}, Replying to: {original_message.reply_to_message.message_id}")
-                original_message = original_message.reply_to_message
-
-            # Print the final message ID identified as the original
-            print(f"Original post ID: {original_message.message_id}")
-
-        except AttributeError as e:
-            print(f"Error traversing reply chain: {e}")
-            return
         print(f"Message from supergroup: {update.message.text}")
         result = predict_comment(update.message.text, model)
         print(result)
 
-        #### test of downloading avatar
-        
-        #### end of test  
+
         if result == "Offensive":
             print("Owner: ",owner)
 
