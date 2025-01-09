@@ -1,75 +1,72 @@
-import requests
-import tensorflow as tf
 import os
-import django
-from dotenv import load_dotenv
+import requests
 import tempfile
-import nest_asyncio
 import asyncio
+import nest_asyncio
+import django
+import torch
+import tensorflow as tf
 from asgiref.sync import sync_to_async
 from telegram import Update
 from telegram.ext import Application, MessageHandler, filters, ContextTypes
-##############
-#  try to do by hashing
-##############
-# Set DJANGO_SETTINGS_MODULE
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'channelmoderation.settings')
+from dotenv import load_dotenv
+from moderation.ml import text_model, image_model  # Import models from `init.py`
+from moderation.models import DeletedComment, Owner, BlockedUser
+
+# Set up Django
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "channelmoderation.settings")
 django.setup()
-from moderation.ml import model, image_model
-from moderation.models import DeletedComment , Owner, BlockedUser
+
+# Load environment variables
 load_dotenv()
-token = os.getenv('TOKEN')
+TOKEN = os.getenv("TOKEN")
+
+# Ensure asyncio compatibility
+nest_asyncio.apply()
+
+# Function to predict text comment
 def predict_comment(comment, model):
-
-    #comment_vector = vectorizer.transform([comment])
-
-    prediction = model.predict([comment])
-
+    prediction = model.predict([comment])  # Using sklearn-based model
     label_mapping = {0: "Non-offensive", 1: "Offensive"}
     return label_mapping.get(prediction[0], "Unknown")
 
+# Function to classify profile image
 def classify_image(image_path, model):
+    # Preprocess image for PyTorch model
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model = model.to(device)
+    
     img = tf.keras.preprocessing.image.load_img(image_path, target_size=(224, 224))
     img_array = tf.keras.preprocessing.image.img_to_array(img) / 255.0
-    img_array = tf.expand_dims(img_array, axis=0)
-    prediction = model.predict(img_array)
-    return "Spam" if prediction[0][0] > 0.5 else "Non-Spam"
-
-nest_asyncio.apply()
-
-async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    img_tensor = torch.tensor(img_array).permute(2, 0, 1).unsqueeze(0).to(device)
     
+    with torch.no_grad():
+        outputs = model(img_tensor)
+        _, preds = torch.max(outputs, 1)
+    return "Spam" if preds.item() == 1 else "Non-Spam"
+
+# Asynchronous message handler
+async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.message.chat.type == "supergroup" and update.message.reply_to_message:
         owner = await sync_to_async(Owner.objects.get)(channel_id=str(update.message.chat.id))
 
-        blocked_user_queryset = (BlockedUser .objects.filter)(
+        # Check if user is blocked
+        blocked_user_queryset = BlockedUser.objects.filter(
             username=update.message.from_user.username.lower(),
-            owner=owner
-        ).select_related('owner') 
-        
-        blocked_user = await sync_to_async(blocked_user_queryset.first)() 
+            owner=owner,
+        ).select_related("owner")
+        blocked_user = await sync_to_async(blocked_user_queryset.first)()
 
         if blocked_user and blocked_user.is_active():
-            #await update.message.reply_text("You are blocked from commenting.")
             await update.message.delete()
-            return  
+            return
 
-        
+        # Process comment text
         original_message = update.message.reply_to_message
-        print(f"Message from supergroup: {update.message.text}")
-        result = predict_comment(update.message.text, model)
-        print(result)
+        comment_result = predict_comment(update.message.text, text_model)
 
-
-        if result == "Offensive":
-            print("Owner: ",owner)
-
-            if original_message.caption:
-                post_text = f"{original_message.caption[:20]}..."
-            elif original_message.text:
-                post_text = f"{original_message.text[:20]}..."
-            else:
-                post_text = "No text"
+        if comment_result == "Offensive":
+            post_text = original_message.caption[:20] if original_message.caption else original_message.text[:20] or "No text"
             sent_from = update.message.from_user
             profile_link = f"https://t.me/{sent_from.username}" if sent_from.username else f"tg://user?id={sent_from.id}"
             await sync_to_async(DeletedComment.objects.create)(
@@ -77,16 +74,15 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 comment=update.message.text.lower(),
                 user=update.message.from_user.username.lower(),
                 channel_id=str(update.message.chat.id),
-                owner = owner,
-                detected_by = 'Comment text',
-                profile_link=profile_link
+                owner=owner,
+                detected_by="Comment text",
+                profile_link=profile_link,
             )
             await update.message.delete()
-            print(f'The comment -{update.message.text}- was deleted because it had been classified as spam/offensive by text')
-            
-            #checking the profile image
+            print(f"The comment -{update.message.text}- was deleted (offensive text).")
         else:
             try:
+                # Process profile photo
                 user_id = update.message.from_user.id
                 profile_photos = await context.bot.get_user_profile_photos(user_id=user_id)
 
@@ -94,18 +90,11 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     largest_photo = max(profile_photos.photos[0], key=lambda x: x.width)
                     file = await context.bot.get_file(largest_photo.file_id)
                     with tempfile.NamedTemporaryFile(suffix=".jpg") as temp_file:
-                        await file.download_to_drive(temp_file.name) 
+                        await file.download_to_drive(temp_file.name)
                         image_result = classify_image(temp_file.name, image_model)
 
-                        print(f"Image result: {image_result}")
-
-                        if image_result == 'Spam':
-                            if original_message.caption:
-                                post_text = f"{original_message.caption[:20]}..."
-                            elif original_message.text:
-                                post_text = f"{original_message.text[:20]}..."
-                            else:
-                                post_text = "No text"
+                        if image_result == "Spam":
+                            post_text = original_message.caption[:20] if original_message.caption else original_message.text[:20] or "No text"
                             sent_from = update.message.from_user
                             profile_link = f"https://t.me/{sent_from.username}" if sent_from.username else f"tg://user?id={sent_from.id}"
                             await sync_to_async(DeletedComment.objects.create)(
@@ -113,35 +102,27 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                                 comment=update.message.text.lower(),
                                 user=update.message.from_user.username.lower(),
                                 channel_id=str(update.message.chat.id),
-                                owner = owner,
-                                detected_by = 'Profile picture',
-                                profile_link=profile_link
+                                owner=owner,
+                                detected_by="Profile picture",
+                                profile_link=profile_link,
                             )
                             await update.message.delete()
-                            print(f'The comment -{update.message.text}- was deleted because it had been classified as spam by image')
+                            print(f"The comment -{update.message.text}- was deleted (spam profile picture).")
                 else:
                     print("No profile photo available.")
-                    
             except Exception as e:
                 print(f"Error handling profile photo logic: {e}")
-        
 
-# Main function to set up the bot
+# Main function
 async def main():
-
-    TOKEN = token
-
     # Create the application
     application = Application.builder().token(TOKEN).build()
 
-    # Add a message handler to listen for all text messages
+    # Add a message handler
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
-    # Start polling the bot
+    # Start polling
     await application.run_polling()
 
 if __name__ == "__main__":
     asyncio.run(main())
-
-
-
