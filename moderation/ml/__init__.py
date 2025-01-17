@@ -14,7 +14,7 @@ def load_model():
         print("Text model loaded successfully.")
     
     # Load the image classification model (PyTorch)
-    image_model_path = os.path.join(base_dir, 'best_resnet18.pth')  # PyTorch model
+    image_model_path = os.path.join(base_dir, 'image_classifier90.pth')  # PyTorch model
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     
     # Define the model architecture to match the saved model
