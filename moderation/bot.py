@@ -75,7 +75,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         # Process comment text
         original_message = update.message.reply_to_message
         comment_result = predict_comment(update.message.text, text_model)
-
+        print(f"Comment prediction for {update.message.text}: {comment_result}")
         if comment_result == "Offensive":
             post_text = original_message.caption[:20] if original_message.caption else original_message.text[:20] or "No text"
             sent_from = update.message.from_user
@@ -103,7 +103,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     with tempfile.NamedTemporaryFile(suffix=".jpg") as temp_file:
                         await file.download_to_drive(temp_file.name)
                         image_result = classify_image(temp_file.name, image_model)
-
+                        print(f"Profile image classification for {update.message.from_user.username}: {image_result}")
                         if image_result == "Spam":
                             post_text = original_message.caption[:20] if original_message.caption else original_message.text[:20] or "No text"
                             sent_from = update.message.from_user
