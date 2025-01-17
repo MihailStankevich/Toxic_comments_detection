@@ -11,12 +11,14 @@ from asgiref.sync import sync_to_async
 from telegram import Update
 from telegram.ext import Application, MessageHandler, filters, ContextTypes
 from dotenv import load_dotenv
-from moderation.ml import text_model, image_model  # Import models from `init.py`
-from moderation.models import DeletedComment, Owner, BlockedUser
 
 # Set up Django
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "channelmoderation.settings")
 django.setup()
+
+# Import models from `init.py` after Django setup
+from moderation.ml import text_model, image_model
+from moderation.models import DeletedComment, Owner, BlockedUser
 
 # Load environment variables
 load_dotenv()
