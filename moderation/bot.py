@@ -43,7 +43,8 @@ def classify_image(image_path, model):
     
     # Define the image transformations (resizing and normalization)
     transform = transforms.Compose([
-        transforms.Resize((224, 224)),  # Resize the image
+        transforms.Resize(256),         # Resize to 256 for consistency with your training
+        transforms.CenterCrop(224),     # Center crop to 224
         transforms.ToTensor(),          # Convert image to Tensor
         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])  # Normalization for ImageNet pre-trained models
     ])
@@ -51,9 +52,11 @@ def classify_image(image_path, model):
     # Apply transformations
     img_tensor = transform(img).unsqueeze(0).to(device)
     
+    # Make prediction
     with torch.no_grad():
         outputs = model(img_tensor)
         _, preds = torch.max(outputs, 1)
+    
     return "Spam" if preds.item() == 1 else "Non-Spam"
 
 # Asynchronous message handler

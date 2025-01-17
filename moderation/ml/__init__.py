@@ -2,7 +2,7 @@ import os
 import pickle
 import torch
 from torchvision import models
-
+import torch.nn as nn
 # Load models
 def load_model():
     base_dir = os.path.dirname(os.path.abspath(__file__)) 
@@ -20,7 +20,14 @@ def load_model():
     # Define the model architecture to match the saved model
     image_model = models.resnet18(pretrained=False)
     num_features = image_model.fc.in_features
-    image_model.fc = torch.nn.Linear(num_features, 2)  # Binary classification
+
+    # Update to match training architecture
+    image_model.fc = nn.Sequential(
+        nn.Linear(num_features, 512),
+        nn.ReLU(),
+        nn.Dropout(0.5),  # 50% dropout used in training
+        nn.Linear(512, 2)  # 2 classes: 'Spam' and 'Non-Spam'
+    )
     image_model.load_state_dict(torch.load(image_model_path, map_location=device))
     image_model = image_model.to(device)
     image_model.eval()  # Set the model to evaluation mode
