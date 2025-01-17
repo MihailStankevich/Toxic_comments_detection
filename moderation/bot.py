@@ -5,7 +5,8 @@ import asyncio
 import nest_asyncio
 import django
 import torch
-import tensorflow as tf
+from PIL import Image
+from torchvision import transforms
 from asgiref.sync import sync_to_async
 from telegram import Update
 from telegram.ext import Application, MessageHandler, filters, ContextTypes
@@ -36,9 +37,17 @@ def classify_image(image_path, model):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = model.to(device)
     
-    img = tf.keras.preprocessing.image.load_img(image_path, target_size=(224, 224))
-    img_array = tf.keras.preprocessing.image.img_to_array(img) / 255.0
-    img_tensor = torch.tensor(img_array).permute(2, 0, 1).unsqueeze(0).to(device)
+    img = Image.open(image_path).convert("RGB")
+    
+    # Define the image transformations (resizing and normalization)
+    transform = transforms.Compose([
+        transforms.Resize((224, 224)),  # Resize the image
+        transforms.ToTensor(),          # Convert image to Tensor
+        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])  # Normalization for ImageNet pre-trained models
+    ])
+    
+    # Apply transformations
+    img_tensor = transform(img).unsqueeze(0).to(device)
     
     with torch.no_grad():
         outputs = model(img_tensor)
