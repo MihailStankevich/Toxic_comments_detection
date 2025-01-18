@@ -111,6 +111,13 @@ def register(request):
             owner.set_password(form.cleaned_data['password'])  
             owner.save()
             messages.success(request, "Registration successful! You can now log in.")
+            subject = 'New Registration'
+            message = f'You have received a new registration from {owner.username}.\n\nChannel ID: {owner.channel_id}'
+            from_email = 'mihailstankevich15@gmail.com'
+            try:
+                send_mail(subject, message, from_email, ['mihailstankevich15@gmail.com'])  
+            except Exception as e:
+                messages.error(request, "There was an error sending your message. Please try again later.")  # Log the error for debugging
             return redirect('login')  
     else:
         form = OwnerRegistrationForm()
