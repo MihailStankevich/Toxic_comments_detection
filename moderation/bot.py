@@ -65,7 +65,9 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         print(result)
 
 
-        if result == "Offensive":
+        if not result:
+            pass
+            '''
             print("Owner: ",owner)
 
             if original_message.caption:
@@ -89,6 +91,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             print(f'The comment -{update.message.text}- was deleted because it had been classified as spam/offensive by text')
             
             #checking the profile image
+            '''
         else:
             try:
                 user_id = update.message.from_user.id
