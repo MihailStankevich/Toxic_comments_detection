@@ -41,9 +41,13 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     if update.message.chat.type == "supergroup" and update.message.reply_to_message:
         owner = await sync_to_async(Owner.objects.get)(channel_id=str(update.message.chat.id))
-
+        username = update.message.from_user.username
+        if username:
+            username = username.lower()
+        else:
+            username = "unknown_user"
         blocked_user_queryset = (BlockedUser .objects.filter)(
-            username=update.message.from_user.username.lower(),
+            username=username,
             owner=owner
         ).select_related('owner') 
         
@@ -75,7 +79,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await sync_to_async(DeletedComment.objects.create)(
                 post=post_text.lower(),
                 comment=update.message.text.lower(),
-                user=update.message.from_user.username.lower(),
+                user=username,
                 channel_id=str(update.message.chat.id),
                 owner = owner,
                 detected_by = 'Comment text',
@@ -111,7 +115,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                             await sync_to_async(DeletedComment.objects.create)(
                                 post=post_text.lower(),
                                 comment=update.message.text.lower(),
-                                user=update.message.from_user.username.lower(),
+                                user=username,
                                 channel_id=str(update.message.chat.id),
                                 owner = owner,
                                 detected_by = 'Profile picture',
