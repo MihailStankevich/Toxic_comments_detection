@@ -39,7 +39,7 @@ nest_asyncio.apply()
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
-    if update.message.chat.type == "supergroup" and update.message.reply_to_message:
+    if update.message.chat.type == "supergroup" and update.message.reply_to_message and update.message:
         owner = await sync_to_async(Owner.objects.get)(channel_id=str(update.message.chat.id))
         username = update.message.from_user.username
         if username:
@@ -114,7 +114,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                             else:
                                 post_text = "No text"
                             sent_from = update.message.from_user
-                            profile_link = f"https://t.me/{sent_from.username}" if sent_from.username else f"tg://user?id={sent_from.id}"
+                            profile_link = f"tg://user?id={sent_from.id}"
                             await sync_to_async(DeletedComment.objects.create)(
                                 post=post_text.lower(),
                                 comment=update.message.text.lower(),
