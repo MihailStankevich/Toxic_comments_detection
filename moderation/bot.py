@@ -9,31 +9,34 @@ import asyncio
 from asgiref.sync import sync_to_async
 from telegram import Update
 from telegram.ext import Application, MessageHandler, filters, ContextTypes
+import numpy as np
+from tensorflow.keras.preprocessing import image
 ##############
 #  try to do by hashing
 ##############
 # Set DJANGO_SETTINGS_MODULE
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'channelmoderation.settings')
 django.setup()
-from moderation.ml import model, image_model
+from moderation.ml import image_model
 from moderation.models import DeletedComment , Owner, BlockedUser
 load_dotenv()
 token = os.getenv('TOKEN')
-def predict_comment(comment, model):
 
-    #comment_vector = vectorizer.transform([comment])
+class_names = ['not_spam', 'spam']
+def preprocess_image(img_path):
+    img = image.load_img(img_path, target_size=(224, 224))
+    img_array = image.img_to_array(img)
+    img_array = img_array / 255.0  # Rescale pixel values
+    img_array = np.expand_dims(img_array, axis=0)  # Add batch dimension
+    return img_array
 
-    prediction = model.predict([comment])
-
-    label_mapping = {0: "Non-offensive", 1: "Offensive"}
-    return label_mapping.get(prediction[0], "Unknown")
-
-def classify_image(image_path, model):
-    img = tf.keras.preprocessing.image.load_img(image_path, target_size=(224, 224))
-    img_array = tf.keras.preprocessing.image.img_to_array(img) / 255.0
-    img_array = tf.expand_dims(img_array, axis=0)
-    prediction = model.predict(img_array)
-    return "Spam" if prediction[0][0] > 0.5 else "Non-Spam"
+# Define function to predict image class
+def classify_image(img_path):
+    img_array = preprocess_image(img_path)
+    predictions = image_model.predict(img_array)
+    predicted_class = np.argmax(predictions, axis=1)[0]
+    confidence = predictions[0][predicted_class]
+    return class_names[predicted_class], confidence
 
 nest_asyncio.apply()
 
@@ -61,11 +64,9 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         
         original_message = update.message.reply_to_message
         print(f"Message from supergroup: {update.message.text}")
-        result = predict_comment(update.message.text, model)
-        print(result)
 
 
-        if not result:
+        if not original_message:
             pass
             '''
             print("Owner: ",owner)
@@ -102,11 +103,11 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     file = await context.bot.get_file(largest_photo.file_id)
                     with tempfile.NamedTemporaryFile(suffix=".jpg") as temp_file:
                         await file.download_to_drive(temp_file.name) 
-                        image_result = classify_image(temp_file.name, image_model)
+                        image_result, confidence = classify_image(temp_file.name, image_model)
 
-                        print(f"Image result: {image_result}")
+                        print(f"Image result: {image_result} with confidence: {confidence:.2f}")
 
-                        if image_result == 'Spam':
+                        if image_result == 'spam' and confidence > 0.8:
                             if original_message.caption:
                                 post_text = f"{original_message.caption[:20]}..."
                             elif original_message.text:
@@ -114,7 +115,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                             else:
                                 post_text = "No text"
                             sent_from = update.message.from_user
-                            profile_link = f"tg://user?id={sent_from.id}"
+                            profile_link = f"https://t.me/{sent_from.username}" if sent_from.username else f"tg://user?id={sent_from.id}"
                             await sync_to_async(DeletedComment.objects.create)(
                                 post=post_text.lower(),
                                 comment=update.message.text.lower(),
