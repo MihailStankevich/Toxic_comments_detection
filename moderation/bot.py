@@ -44,7 +44,7 @@ def classify_image(img_path):
     # Run inference
     image_model.invoke()
     
-    # Get the output
+    # Get the outputt
     predictions = image_model.get_tensor(output_details[0]['index'])
     predicted_class = np.argmax(predictions, axis=1)[0]
     confidence = predictions[0][predicted_class]
