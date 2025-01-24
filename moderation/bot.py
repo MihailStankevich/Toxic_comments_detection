@@ -33,7 +33,19 @@ def preprocess_image(img_path):
 # Define function to predict image class
 def classify_image(img_path):
     img_array = preprocess_image(img_path)
-    predictions = image_model.predict(img_array)
+    
+    # Prepare input tensor
+    input_details = image_model.get_input_details()
+    output_details = image_model.get_output_details()
+    
+    # Set the tensor to the input data
+    image_model.set_tensor(input_details[0]['index'], img_array)
+    
+    # Run inference
+    image_model.invoke()
+    
+    # Get the output
+    predictions = image_model.get_tensor(output_details[0]['index'])
     predicted_class = np.argmax(predictions, axis=1)[0]
     confidence = predictions[0][predicted_class]
     return class_names[predicted_class], confidence
