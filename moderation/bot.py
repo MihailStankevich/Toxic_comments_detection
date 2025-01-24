@@ -9,9 +9,9 @@ import asyncio
 from asgiref.sync import sync_to_async
 from telegram import Update
 from telegram.ext import Application, MessageHandler, filters, ContextTypes
-##############
+#############
 #  try to do by hashing
-##############
+#############
 # Set DJANGO_SETTINGS_MODULE
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'channelmoderation.settings')
 django.setup()
