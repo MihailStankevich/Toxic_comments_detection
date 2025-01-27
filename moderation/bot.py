@@ -84,7 +84,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         
         original_message = update.message.reply_to_message
-        print(f"Message from supergroup: {update.message.text}")
+        print(f"Message from supergroup{owner.username}: {update.message.text}")
         result = predict_comment(update.message.text, model)
         print(result)
 
