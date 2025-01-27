@@ -1,3 +1,3 @@
 release: pip install -r runtime-requirements.txt
-web: gunicorn channelmoderation.wsgi --log-file -
-worker: python moderation/bot.py
+web: PYTHONPATH=/tmp gunicorn channelmoderation.wsgi --log-file -
+worker: PYTHONPATH=/tmp python moderation/bot.py
