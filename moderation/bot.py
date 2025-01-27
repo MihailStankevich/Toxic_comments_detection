@@ -89,39 +89,14 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         print(result)
 
 
-        if not result:
+        if not original_message:
             pass
-            '''
-            print("Owner: ",owner)
-
-            if original_message.caption:
-                post_text = f"{original_message.caption[:20]}..."
-            elif original_message.text:
-                post_text = f"{original_message.text[:20]}..."
-            else:
-                post_text = "No text"
-            sent_from = update.message.from_user
-            profile_link = f"https://t.me/{sent_from.username}" if sent_from.username else f"tg://user?id={sent_from.id}"
-            await sync_to_async(DeletedComment.objects.create)(
-                post=post_text.lower(),
-                comment=update.message.text.lower(),
-                user=username,
-                channel_id=str(update.message.chat.id),
-                owner = owner,
-                detected_by = 'Comment text',
-                profile_link=profile_link
-            )
-            await update.message.delete()
-            print(f'The comment -{update.message.text}- was deleted because it had been classified as spam/offensive by text')
-            
-            #checking the profile image
-            '''
         else:
             try:
                 user_id = update.message.from_user.id
                 profile_photos = await get_user_profile_photos(context.bot, user_id)
 
-                if profile_photos.photos:
+                if profile_photos and profile_photos.photos:
                     largest_photo = max(profile_photos.photos[0], key=lambda x: x.width)
                     file = await context.bot.get_file(largest_photo.file_id)
                     with tempfile.NamedTemporaryFile(suffix=".jpg") as temp_file:
