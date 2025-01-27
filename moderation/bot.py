@@ -1,4 +1,6 @@
 import os
+import sys
+sys.path.insert(0, '/tmp')
 import requests
 import tempfile
 import asyncio
