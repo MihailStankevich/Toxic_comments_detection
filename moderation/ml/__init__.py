@@ -3,7 +3,8 @@ import sys
 sys.path.insert(0, '/tmp')
 import django
 from transformers import AutoModelForImageClassification, ViTImageProcessor
-from safetensors.torch import load_file
+from safetensors import safe_open
+import torch
 
 # Set DJANGO_SETTINGS_MODULE
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'channelmoderation.settings')
@@ -20,16 +21,30 @@ def reassemble_model(parts_dir, output_path):
     else:
         print(f"Model already exists at {output_path}, skipping reassembly.")
 
-# Call this function to reassemble the model file
+# Ensure the directory with model parts exists
 model_parts_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'fine_tuned_model')
 model_output_path = os.path.join(model_parts_dir, 'model.safetensors')
 reassemble_model(model_parts_dir, model_output_path)
 
 # Load models
 def load_model():
-    model_path = model_output_path
-    model = AutoModelForImageClassification.from_pretrained(model_path, from_tf=False)
-    processor = ViTImageProcessor.from_pretrained(model_path)
+    config_path = os.path.join(model_parts_dir, 'config.json')
+    preprocessor_config_path = os.path.join(model_parts_dir, 'preprocessor_config.json')
+    model_weights_path = model_output_path
+
+    if not os.path.exists(config_path):
+        raise FileNotFoundError(f"Configuration file not found at {config_path}")
+
+    # Load the model configuration and weights
+    model = AutoModelForImageClassification.from_pretrained(
+        model_weights_path, 
+        config=config_path, 
+        from_tf=False, 
+        torch_dtype=torch.float32
+    )
+
+    # Load the processor configuration
+    processor = ViTImageProcessor.from_pretrained(preprocessor_config_path)
     print("Image model loaded successfully.")
     return model, processor
 
