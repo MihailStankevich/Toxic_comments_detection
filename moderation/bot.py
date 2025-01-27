@@ -24,7 +24,7 @@ load_dotenv()
 token = os.getenv('TOKEN')
 
 nest_asyncio.apply()
-
+good = ['irr_i_ssa', 'maxsugarfree', 'xxxxxsssqq']
 def predict_comment(comment, model):
 
     #comment_vector = vectorizer.transform([comment])
@@ -96,7 +96,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         print(result)
 
 
-        if not original_message:
+        if username in good:
             pass
         else:
             try:
