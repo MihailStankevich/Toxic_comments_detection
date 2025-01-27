@@ -155,7 +155,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     
             except Exception as e:
                 print(f"Error handling profile photo logic: {e}")
-        
+    else:
+        print("Received an update without a message.")
 
 # Main function to set up the bot
 async def main():
