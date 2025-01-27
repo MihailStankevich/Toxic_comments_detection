@@ -1,39 +1,32 @@
 import os
-import pickle
-import torch
-from torchvision import models
-import torch.nn as nn
+import django
+from transformers import AutoModelForImageClassification, ViTImageProcessor, safetensors
+
+# Set DJANGO_SETTINGS_MODULE
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'channelmoderation.settings')
+django.setup()
+
+def reassemble_model(parts_dir, output_path):
+    if not os.path.exists(output_path):
+        with open(output_path, 'wb') as output_file:
+            for part in sorted(os.listdir(parts_dir)):
+                part_path = os.path.join(parts_dir, part)
+                with open(part_path, 'rb') as part_file:
+                    output_file.write(part_file.read())
+        print(f"Reassembled model to {output_path}")
+    else:
+        print(f"Model already exists at {output_path}, skipping reassembly.")
+
+# Call this function to reassemble the model file
+model_parts_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'fine_tuned_model')
+reassemble_model(model_parts_dir, os.path.join(model_parts_dir, 'model.safetensors'))
+
 # Load models
 def load_model():
-    base_dir = os.path.dirname(os.path.abspath(__file__)) 
-
-    # Load the text classification model (SVC pipeline)
-    model_path = os.path.join(base_dir, 'svc_model86.pkl')  # Text model and vectorizer
-    with open(model_path, 'rb') as f:
-        text_model = pickle.load(f)
-        print("Text model loaded successfully.")
-    
-    # Load the image classification model (PyTorch)
-    image_model_path = os.path.join(base_dir, 'image_classifier90.pth')  # PyTorch model
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    
-    # Define the model architecture to match the saved model
-    image_model = models.resnet18(pretrained=False)
-    num_features = image_model.fc.in_features
-
-    # Update to match training architecture
-    image_model.fc = nn.Sequential(
-        nn.Linear(num_features, 512),
-        nn.ReLU(),
-        nn.Dropout(0.5),  # 50% dropout used in training
-        nn.Linear(512, 2)  # 2 classes: 'Spam' and 'Non-Spam'
-    )
-    image_model.load_state_dict(torch.load(image_model_path, map_location=device))
-    image_model = image_model.to(device)
-    image_model.eval()  # Set the model to evaluation mode
+    model_path = model_parts_dir
+    model = AutoModelForImageClassification.from_pretrained(model_path, from_tf=False, torch_dtype=safetensors)
+    processor = ViTImageProcessor.from_pretrained(model_path)
     print("Image model loaded successfully.")
-    
-    return text_model, image_model
+    return model, processor
 
-# Initialize models
-text_model, image_model = load_model()
+image_model, image_processor = load_model()

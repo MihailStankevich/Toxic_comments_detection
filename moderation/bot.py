@@ -4,6 +4,7 @@ import tempfile
 import asyncio
 import nest_asyncio
 import django
+from transformers import ViTImageProcessor
 import torch
 from PIL import Image
 from torchvision import transforms
@@ -17,7 +18,7 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "channelmoderation.settings")
 django.setup()
 
 # Import models from `init.py` after Django setup
-from moderation.ml import text_model, image_model
+from moderation.ml import image_processor, image_model
 from moderation.models import DeletedComment, Owner, BlockedUser
 
 # Load environment variables
@@ -28,45 +29,40 @@ TOKEN = os.getenv("TOKEN")
 nest_asyncio.apply()
 
 # Function to predict text comment
-def predict_comment(comment, model):
-    prediction = model.predict([comment])  # Using sklearn-based model
-    label_mapping = {0: "Non-offensive", 1: "Offensive"}
-    return label_mapping.get(prediction[0], "Unknown")
+class_names = ['not_spam', 'spam']
 
-# Function to classify profile image
-def classify_image(image_path, model):
-    # Preprocess image for PyTorch model
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model = model.to(device)
+# Preprocess the image
+def preprocess_image(img_path, processor):
+    img = Image.open(img_path)
+    inputs = processor(images=img, return_tensors="pt")
+    return inputs
+
+# Define function to predict image class
+def classify_image(img_path, model, processor):
+    inputs = preprocess_image(img_path, processor)
     
-    img = Image.open(image_path).convert("RGB")
-    
-    # Define the image transformations (resizing and normalization)
-    transform = transforms.Compose([
-        transforms.Resize(256),         # Resize to 256 for consistency with your training
-        transforms.CenterCrop(224),     # Center crop to 224
-        transforms.ToTensor(),          # Convert image to Tensor
-        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])  # Normalization for ImageNet pre-trained models
-    ])
-    
-    # Apply transformations
-    img_tensor = transform(img).unsqueeze(0).to(device)
-    
-    # Make prediction
+    # Perform inference
     with torch.no_grad():
-        outputs = model(img_tensor)
-        _, preds = torch.max(outputs, 1)
+        outputs = model(**inputs)
     
-    return "Spam" if preds.item() == 1 else "Non-Spam"
+    # Get the predicted class
+    logits = outputs.logits
+    predicted_class_idx = logits.argmax(-1).item()
+    confidence = torch.softmax(logits, dim=1)[0][predicted_class_idx].item()
+    return class_names[predicted_class_idx], confidence
 
 # Asynchronous message handler
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.message.chat.type == "supergroup" and update.message.reply_to_message:
         owner = await sync_to_async(Owner.objects.get)(channel_id=str(update.message.chat.id))
-
+        username = update.message.from_user.username
+        if username:
+            username = username.lower()
+        else:
+            username = "unknown_user"
         # Check if user is blocked
         blocked_user_queryset = BlockedUser.objects.filter(
-            username=update.message.from_user.username.lower(),
+            username=username,
             owner=owner,
         ).select_related("owner")
         blocked_user = await sync_to_async(blocked_user_queryset.first)()
@@ -77,23 +73,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         # Process comment text
         original_message = update.message.reply_to_message
-        comment_result = predict_comment(update.message.text, text_model)
-        print(f"Comment prediction for {update.message.text}: {comment_result}")
-        if comment_result == "Offensive":
-            post_text = original_message.caption[:20] if original_message.caption else original_message.text[:20] or "No text"
-            sent_from = update.message.from_user
-            profile_link = f"https://t.me/{sent_from.username}" if sent_from.username else f"tg://user?id={sent_from.id}"
-            await sync_to_async(DeletedComment.objects.create)(
-                post=post_text.lower(),
-                comment=update.message.text.lower(),
-                user=update.message.from_user.username.lower(),
-                channel_id=str(update.message.chat.id),
-                owner=owner,
-                detected_by="Comment text",
-                profile_link=profile_link,
-            )
-            await update.message.delete()
-            print(f"The comment -{update.message.text}- was deleted (offensive text).")
+        if original_message:
+            pass
         else:
             try:
                 # Process profile photo
@@ -105,16 +86,17 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     file = await context.bot.get_file(largest_photo.file_id)
                     with tempfile.NamedTemporaryFile(suffix=".jpg") as temp_file:
                         await file.download_to_drive(temp_file.name)
-                        image_result = classify_image(temp_file.name, image_model)
-                        print(f"Profile image classification for {update.message.from_user.username}: {image_result}")
-                        if image_result == "Spam":
+                        image_result, confidence = classify_image(temp_file.name, image_model, image_processor)
+                        print(f"Image result: {image_result} with confidence: {confidence:.2f}")
+
+                        if image_result == "spam" and confidence > 0.8:
                             post_text = original_message.caption[:20] if original_message.caption else original_message.text[:20] or "No text"
                             sent_from = update.message.from_user
                             profile_link = f"https://t.me/{sent_from.username}" if sent_from.username else f"tg://user?id={sent_from.id}"
                             await sync_to_async(DeletedComment.objects.create)(
                                 post=post_text.lower(),
                                 comment=update.message.text.lower(),
-                                user=update.message.from_user.username.lower(),
+                                user=username,
                                 channel_id=str(update.message.chat.id),
                                 owner=owner,
                                 detected_by="Profile picture",

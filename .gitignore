@@ -6,3 +6,4 @@ __pycache__/
 .env
 venv/
 /staticfiles/
+fine_tuned_model/model.safetensors
