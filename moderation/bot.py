@@ -9,7 +9,7 @@ import asyncio
 from asgiref.sync import sync_to_async
 from telegram import Update
 from telegram.ext import Application, MessageHandler, filters, ContextTypes
-from telegram.error import RetryAfter, TimedOut, NetworkError
+from telegram.error import RetryAfter, TimedOut, NetworkError, TelegramError
 import time
 #############
 
@@ -43,16 +43,23 @@ def classify_image(image_path, model):
 
 def retry(func):
     async def wrapper(*args, **kwargs):
-        max_retries = 3  # Number of retry attempts
+        max_retries = 5  # Increase retry attempts if needed
         for attempt in range(max_retries):
             try:
                 return await func(*args, **kwargs)
-            except (RetryAfter, TimedOut, NetworkError) as e:
+            except RetryAfter as e:
+                print(f"RetryAfter error: Waiting for {e.retry_after} seconds...")
+                await asyncio.sleep(e.retry_after)  # Wait as instructed by Telegram
+            except (TimedOut, NetworkError) as e:
                 print(f"Retrying... Attempt {attempt + 1} due to: {str(e)}")
-                time.sleep(2 ** attempt)  # Exponential backoff: 1s, 2s, 4s
+                await asyncio.sleep(2 ** attempt)  # Exponential backoff
+            except TelegramError as e:
+                print(f"Unhandled TelegramError: {e}")
+                break  # Exit loop for unrecoverable errors
         print("Max retries reached. Giving up.")
         return None
     return wrapper
+
 
 # Apply retry logic to get_user_profile_photos
 @retry
@@ -84,7 +91,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         
         original_message = update.message.reply_to_message
-        print(f"Message from supergroup{owner.username}: {update.message.text}")
+        print(f"Message from supergroup {owner.username}: {update.message.text}")
         result = predict_comment(update.message.text, model)
         print(result)
 
