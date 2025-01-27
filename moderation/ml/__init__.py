@@ -3,7 +3,7 @@ import sys
 sys.path.insert(0, '/tmp')
 import django
 from transformers import AutoModelForImageClassification, ViTImageProcessor
-import safetensors
+from safetensors.torch import load_file
 
 # Set DJANGO_SETTINGS_MODULE
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'channelmoderation.settings')
@@ -22,12 +22,13 @@ def reassemble_model(parts_dir, output_path):
 
 # Call this function to reassemble the model file
 model_parts_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'fine_tuned_model')
-reassemble_model(model_parts_dir, os.path.join(model_parts_dir, 'model.safetensors'))
+model_output_path = os.path.join(model_parts_dir, 'model.safetensors')
+reassemble_model(model_parts_dir, model_output_path)
 
 # Load models
 def load_model():
-    model_path = model_parts_dir
-    model = AutoModelForImageClassification.from_pretrained(model_path, from_tf=False, torch_dtype=safetensors)
+    model_path = model_output_path
+    model = AutoModelForImageClassification.from_pretrained(model_path, from_tf=False)
     processor = ViTImageProcessor.from_pretrained(model_path)
     print("Image model loaded successfully.")
     return model, processor
