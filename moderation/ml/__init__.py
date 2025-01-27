@@ -2,7 +2,8 @@ import os
 import sys
 sys.path.insert(0, '/tmp')
 import django
-from transformers import AutoModelForImageClassification, ViTImageProcessor, safetensors
+from transformers import AutoModelForImageClassification, ViTImageProcessor
+import safetensors
 
 # Set DJANGO_SETTINGS_MODULE
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'channelmoderation.settings')
