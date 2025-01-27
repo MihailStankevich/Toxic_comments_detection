@@ -9,6 +9,8 @@ import asyncio
 from asgiref.sync import sync_to_async
 from telegram import Update
 from telegram.ext import Application, MessageHandler, filters, ContextTypes
+from telegram.error import RetryAfter, TimedOut, NetworkError
+import time
 #############
 
 #############
@@ -20,6 +22,9 @@ from moderation.ml import model, image_model
 from moderation.models import DeletedComment , Owner, BlockedUser
 load_dotenv()
 token = os.getenv('TOKEN')
+
+nest_asyncio.apply()
+
 def predict_comment(comment, model):
 
     #comment_vector = vectorizer.transform([comment])
@@ -36,7 +41,25 @@ def classify_image(image_path, model):
     prediction = model.predict(img_array)
     return "Spam" if prediction[0][0] > 0.5 else "Non-Spam"
 
-nest_asyncio.apply()
+def retry(func):
+    async def wrapper(*args, **kwargs):
+        max_retries = 3  # Number of retry attempts
+        for attempt in range(max_retries):
+            try:
+                return await func(*args, **kwargs)
+            except (RetryAfter, TimedOut, NetworkError) as e:
+                print(f"Retrying... Attempt {attempt + 1} due to: {str(e)}")
+                time.sleep(2 ** attempt)  # Exponential backoff: 1s, 2s, 4s
+        print("Max retries reached. Giving up.")
+        return None
+    return wrapper
+
+# Apply retry logic to get_user_profile_photos
+@retry
+async def get_user_profile_photos(bot, user_id):
+    return await bot.get_user_profile_photos(user_id=user_id)
+
+
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
@@ -96,7 +119,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         else:
             try:
                 user_id = update.message.from_user.id
-                profile_photos = await context.bot.get_user_profile_photos(user_id=user_id)
+                profile_photos = await get_user_profile_photos(context.bot, user_id)
 
                 if profile_photos.photos:
                     largest_photo = max(profile_photos.photos[0], key=lambda x: x.width)
