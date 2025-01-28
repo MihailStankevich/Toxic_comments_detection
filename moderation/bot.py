@@ -163,7 +163,7 @@ async def delayed_check(user_id, update: Update, context: ContextTypes.DEFAULT_T
 
                 print(f"Image result: {image_result}")
 
-                if image_result == "spam":
+                if image_result == "Spam":
                     post_text = update.message.caption[:20] if update.message.caption else update.message.text[:20] or "No text"
                     sent_from = update.message.from_user
                     profile_link = f"https://t.me/{sent_from.username}" if sent_from.username else f"tg://user?id={sent_from.id}"
