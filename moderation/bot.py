@@ -11,6 +11,7 @@ from telegram import Update
 from telegram.ext import Application, MessageHandler, filters, ContextTypes
 from telegram.error import RetryAfter, TimedOut, NetworkError, TelegramError
 import time
+from datetime import datetime, timedelta
 #############
 
 #############
@@ -132,6 +133,12 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                             )
                             await update.message.delete()
                             print(f'The comment -{update.message.text}- was deleted because it had been classified as spam by image')
+
+                    # Schedule a second check for comments posted within the first few seconds
+                    post_time = original_message.date
+                    comment_time = update.message.date
+                    if (comment_time - post_time) < timedelta(seconds=10):
+                        asyncio.create_task(delayed_check(user_id, update, context))
                 else:
                     print("No profile photo available.")
                     
@@ -140,6 +147,42 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         print("Received an update without a message.")
 
+async def delayed_check(user_id, update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await asyncio.sleep(10)
+    try:
+        # Process profile photo again after delay
+        profile_photos = await context.bot.get_user_profile_photos(user_id=user_id)
+
+        if profile_photos and profile_photos.photos:
+            largest_photo = max(profile_photos.photos[0], key=lambda x: x.width)
+            file = await context.bot.get_file(largest_photo.file_id)
+            with tempfile.NamedTemporaryFile(suffix=".jpg") as temp_file:
+                await file.download_to_drive(temp_file.name)
+                image_result = classify_image(temp_file.name, image_model)
+
+                print(f"Image result: {image_result}")
+
+                if image_result == "spam":
+                    post_text = update.message.caption[:20] if update.message.caption else update.message.text[:20] or "No text"
+                    sent_from = update.message.from_user
+                    profile_link = f"https://t.me/{sent_from.username}" if sent_from.username else f"tg://user?id={sent_from.id}"
+                    await sync_to_async(DeletedComment.objects.create)(
+                        post=post_text.lower(),
+                        comment=update.message.text.lower(),
+                        user=update.message.from_user.username.lower() if update.message.from_user.username else "unknown_user",
+                        channel_id=str(update.message.chat.id),
+                        owner=await sync_to_async(Owner.objects.get)(channel_id=str(update.message.chat.id)),
+                        detected_by="Profile picture",
+                        profile_link=profile_link,
+                    )
+                    await update.message.delete()
+        else:
+            print("No profile photo available.")
+                    
+    except Exception as e:
+        print(f"Error handling profile photo logic: {e}")
+    else:
+        print("Received an update without a message.")
 # Main function to set up the bot
 async def main():
 
