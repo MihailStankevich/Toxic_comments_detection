@@ -134,13 +134,14 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                             await update.message.delete()
                             print(f'The comment -{update.message.text}- was deleted because it had been classified as spam by image')
 
+                    
+                else:
+                    print("No profile photo available.")
                     # Schedule a second check for comments posted within the first few seconds
                     post_time = original_message.date
                     comment_time = update.message.date
                     if (comment_time - post_time) < timedelta(seconds=10):
                         asyncio.create_task(delayed_check(user_id, update, context))
-                else:
-                    print("No profile photo available.")
                     
             except Exception as e:
                 print(f"Error handling profile photo logic: {e}")
@@ -148,7 +149,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         print("Received an update without a message.")
 
 async def delayed_check(user_id, update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await asyncio.sleep(10)
+    await asyncio.sleep(7)
     try:
         # Process profile photo again after delay
         profile_photos = await context.bot.get_user_profile_photos(user_id=user_id)
