@@ -25,7 +25,7 @@ load_dotenv()
 token = os.getenv('TOKEN')
 
 nest_asyncio.apply()
-good = ['irr_i_ssa', 'maxsugarfree', 'xxxxxsssqq', 'igorekbuy']
+good = ['irr_i_ssa', 'maxsugarfree', 'xxxxxsssqq', 'igorekbuy', 'frankosha69']
 def predict_comment(comment, model):
 
     #comment_vector = vectorizer.transform([comment])
