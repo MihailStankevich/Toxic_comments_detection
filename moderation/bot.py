@@ -71,14 +71,61 @@ async def get_user_profile_photos(bot, user_id):
 
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    
     if update.message.chat.type == "supergroup" and update.message.reply_to_message and update.message:
-        owner = await sync_to_async(Owner.objects.get)(channel_id=str(update.message.chat.id))
-        username = update.message.from_user.username
-        if username:
-            username = username.lower()
+        user_id = update.message.from_user.id
+        username = update.message.from_user.username.lower() if update.message.from_user.username else "unknown_user"
+        print(f"Message from supergroup : {update.message.text}")
+        if username in good or update.message.from_user.id in good_id:
+            pass
         else:
-            username = "unknown_user"
+            try:
+                #first of all checking the image
+                profile_photos = await get_user_profile_photos(context.bot, user_id)
+                if profile_photos and profile_photos.photos:
+                    largest_photo = max(profile_photos.photos[0], key=lambda x: x.width)
+                    file = await context.bot.get_file(largest_photo.file_id)
+                    
+                    with tempfile.NamedTemporaryFile(suffix=".jpg") as temp_file:
+                        await file.download_to_drive(temp_file.name)
+                        image_result = classify_image(temp_file.name, image_model)
+                    #and then checking the text
+                        original_message = update.message.reply_to_message
+                        owner = await sync_to_async(Owner.objects.get)(channel_id=str(update.message.chat.id))
+
+                        if image_result == 'Spam':
+                            if original_message.caption:
+                                post_text = f"{original_message.caption[:20]}..."
+                            elif original_message.text:
+                                post_text = f"{original_message.text[:20]}..."
+                            else:
+                                post_text = "No text"
+                            sent_from = update.message.from_user
+                            profile_link = f"https://t.me/{sent_from.username}" if sent_from.username else f"tg://user?id={sent_from.id}"
+                            await sync_to_async(DeletedComment.objects.create)(
+                                post=post_text.lower(),
+                                comment=update.message.text.lower(),
+                                user=username,
+                                channel_id=str(update.message.chat.id),
+                                owner = owner,
+                                detected_by = 'Profile picture',
+                                profile_link=profile_link
+                            )
+                            await update.message.delete()
+                            print(f'The comment/by -{update.message.text if update.message.text else username}- was deleted because it had been classified as spam by image')
+                            return  # Stop further processing
+
+                else:
+                    print("No profile photo available.")
+                    # Schedule a second check for comments posted within the first few seconds
+                    post_time = original_message.date
+                    comment_time = update.message.date
+                    if (comment_time - post_time) < timedelta(seconds=10):
+                        asyncio.create_task(delayed_check(user_id, update, context))
+
+            except Exception as e:
+                print(f"Error checking profile picture: {e}")
+
+        owner = await sync_to_async(Owner.objects.get)(channel_id=str(update.message.chat.id))
         blocked_user_queryset = (BlockedUser .objects.filter)(
             username=username,
             owner=owner
@@ -90,65 +137,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             #await update.message.reply_text("You are blocked from commenting.")
             await update.message.delete()
             return  
-
         
-        original_message = update.message.reply_to_message
-        print(f"Message from supergroup {owner.username}: {update.message.text}")
-        result = predict_comment(update.message.text, model)
-        print(result)
-
-
-        if username in good or update.message.from_user.id in good_id:
-            pass
-        else:
-            try:
-                user_id = update.message.from_user.id
-                profile_photos = await get_user_profile_photos(context.bot, user_id)
-
-                if profile_photos and profile_photos.photos:
-                    largest_photo = max(profile_photos.photos[0], key=lambda x: x.width)
-                    file = await context.bot.get_file(largest_photo.file_id)
-                    with tempfile.NamedTemporaryFile(suffix=".jpg") as temp_file:
-                        await file.download_to_drive(temp_file.name) 
-                        image_result = classify_image(temp_file.name, image_model)
-
-                        print(f"Image result: {image_result}")
-
-                        if image_result == 'Spam':
-                            if original_message.caption:
-                                post_text = f"{original_message.caption[:20]}..."
-                            elif original_message.text:
-                                post_text = f"{original_message.text[:20]}..."
-                            else:
-                                post_text = "No text"
-                            sent_from = update.message.from_user
-                            profile_link = f"tg://user?id={sent_from.id}"
-                            await sync_to_async(DeletedComment.objects.create)(
-                                post=post_text.lower(),
-                                comment=update.message.text.lower(),
-                                user=username,
-                                channel_id=str(update.message.chat.id),
-                                owner = owner,
-                                detected_by = 'Profile picture',
-                                profile_link=profile_link
-                            )
-                            await update.message.delete()
-                            print(f'The comment -{update.message.text}- was deleted because it had been classified as spam by image')
-
-                    
-                else:
-                    print("No profile photo available.")
-                    # Schedule a second check for comments posted within the first few seconds
-                    post_time = original_message.date
-                    comment_time = update.message.date
-                    if (comment_time - post_time) < timedelta(seconds=10):
-                        asyncio.create_task(delayed_check(user_id, update, context))
-                    
-            except Exception as e:
-                print(f"Error handling profile photo logic: {e}")
-    else:
-        print("Received an update without a message.")
-
 async def delayed_check(user_id, update: Update, context: ContextTypes.DEFAULT_TYPE):
     await asyncio.sleep(7)
     try:
@@ -164,10 +153,18 @@ async def delayed_check(user_id, update: Update, context: ContextTypes.DEFAULT_T
 
                 print(f"Image result: {image_result}")
 
+                original_message = update.message.reply_to_message
                 if image_result == "Spam":
-                    post_text = update.message.caption[:20] if update.message.caption else update.message.text[:20] or "No text"
+                    if original_message.caption:
+                        post_text = f"{original_message.caption[:20]}..."
+                    elif original_message.text:
+                        post_text = f"{original_message.text[:20]}..."
+                    else:
+                        post_text = "No text"
+
                     sent_from = update.message.from_user
                     profile_link = f"https://t.me/{sent_from.username}" if sent_from.username else f"tg://user?id={sent_from.id}"
+
                     await sync_to_async(DeletedComment.objects.create)(
                         post=post_text.lower(),
                         comment=update.message.text.lower(),
@@ -185,6 +182,7 @@ async def delayed_check(user_id, update: Update, context: ContextTypes.DEFAULT_T
         print(f"Error handling profile photo logic: {e}")
     else:
         print("Received an update without a message.")
+
 # Main function to set up the bot
 async def main():
 
