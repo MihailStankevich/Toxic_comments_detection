@@ -93,14 +93,11 @@ def block_user(request, username):
 @login_required
 def unblock_user(request, username):
     if request.method == 'POST':
-        # Get the blocked user instance
         blocked_user = get_object_or_404(BlockedUser , username=username, owner=request.user)
         
-        # Delete the blocked user record
         blocked_user.delete()
         messages.success(request, f'User  {username} has been unblocked successfully.')
         
-        # Redirect to the blocked users page with a success message
         return redirect('blocked_users', channel_id=request.user.channel_id)
 
 def register(request):

@@ -25,8 +25,8 @@ load_dotenv()
 token = os.getenv('TOKEN')
 
 nest_asyncio.apply()
-good = ['irr_i_ssa', 'maxsugarfree', 'xxxxxsssqq', 'igorekbuy', 'frankosha69', 'matras13']
-good_id = [1743466232]
+good = ['irr_i_ssa', 'maxsugarfree', 'xxxxxsssqq', 'igorekbuy', 'frankosha69', 'matras13', 'sacramentozz']
+good_id = [1743466232, 7401964075]
 def predict_comment(comment, model):
 
     #comment_vector = vectorizer.transform([comment])
@@ -45,7 +45,7 @@ def classify_image(image_path, model):
 
 def retry(func):
     async def wrapper(*args, **kwargs):
-        max_retries = 5  # Increase retry attempts if needed
+        max_retries = 5 
         for attempt in range(max_retries):
             try:
                 return await func(*args, **kwargs)
@@ -195,7 +195,7 @@ async def main():
 
     # Add a message handler to listen for all text messages
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
-
+    application.add_handler(MessageHandler(filters.VOICE, handle_message)) # mesage handler for voice messages
     # Start polling the bot
     await application.run_polling()
 
