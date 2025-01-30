@@ -151,7 +151,6 @@ async def delayed_check(user_id, update: Update, context: ContextTypes.DEFAULT_T
             with tempfile.NamedTemporaryFile(suffix=".jpg") as temp_file:
                 await file.download_to_drive(temp_file.name)
                 image_result = classify_image(temp_file.name, image_model)
-
                 print(f"Image result: {image_result}")
 
                 original_message = update.message.reply_to_message
