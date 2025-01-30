@@ -117,6 +117,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 else:
                     print("No profile photo available.")
                     # Schedule a second check for comments posted within the first few seconds
+                    original_message = update.message.reply_to_message
                     post_time = original_message.date
                     comment_time = update.message.date
                     if (comment_time - post_time) < timedelta(seconds=10):
