@@ -26,6 +26,7 @@ token = os.getenv('TOKEN')
 
 nest_asyncio.apply()
 good = ['irr_i_ssa', 'maxsugarfree', 'xxxxxsssqq', 'igorekbuy', 'frankosha69', 'matras13']
+good_id = [1743466232]
 def predict_comment(comment, model):
 
     #comment_vector = vectorizer.transform([comment])
@@ -97,7 +98,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         print(result)
 
 
-        if username in good:
+        if username in good or update.message.from_user.id in good_id:
             pass
         else:
             try:
