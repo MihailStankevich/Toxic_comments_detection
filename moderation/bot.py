@@ -88,6 +88,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     with tempfile.NamedTemporaryFile(suffix=".jpg") as temp_file:
                         await file.download_to_drive(temp_file.name)
                         image_result = classify_image(temp_file.name, image_model)
+                        print(f"Image result: {image_result}")
                     #and then checking the text
                         original_message = update.message.reply_to_message
                         owner = await sync_to_async(Owner.objects.get)(channel_id=str(update.message.chat.id))
