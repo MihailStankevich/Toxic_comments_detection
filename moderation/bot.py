@@ -71,7 +71,7 @@ async def get_user_profile_photos(bot, user_id):
 
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if update.message.chat.type == "supergroup" and update.message.reply_to_message and update.message:
+    if  update.message and update.message.chat and update.message.reply_to_message and update.message.chat.type == "supergroup" :
         user_id = update.message.from_user.id
         username = update.message.from_user.username.lower() if update.message.from_user.username else "unknown_user"
         print(f"Message from supergroup : {update.message.text}")
@@ -128,8 +128,10 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 print(f"Error checking profile picture: {e}")
 
             try:
-                #check for the inline buttons
-                if update.message.reply_markup and update.message.reply_markup.inline_keyboard:
+                #check for the inline buttons and forward from bot
+                has_inline_buttons = update.message.reply_markup and update.message.reply_markup.inline_keyboard
+                is_forwarded_from_bot = update.message.forward_from and update.message.forward_from.is_bot
+                if has_inline_buttons or is_forwarded_from_bot:
                     original_message = update.message.reply_to_message
                     owner = await sync_to_async(Owner.objects.get)(channel_id=str(update.message.chat.id))
 
