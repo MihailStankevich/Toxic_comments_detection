@@ -130,7 +130,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             try:
                 #check for the inline buttons and forward from bot
                 has_inline_buttons = update.message.reply_markup and update.message.reply_markup.inline_keyboard
-                is_forwarded_from_bot = update.message.forward_from and update.message.forward_from.is_bot
+                is_forwarded_from_bot = hasattr(update.message, 'forward_from') and update.message.forward_from and update.message.forward_from.is_bot
                 if has_inline_buttons or is_forwarded_from_bot:
                     original_message = update.message.reply_to_message
                     owner = await sync_to_async(Owner.objects.get)(channel_id=str(update.message.chat.id))
