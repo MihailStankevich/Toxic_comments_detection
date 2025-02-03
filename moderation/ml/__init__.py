@@ -10,7 +10,7 @@ django.setup()
 def load_model():
     base_dir = os.path.dirname(os.path.abspath(__file__)) 
     model_path = os.path.join(base_dir, 'svc_spam_model.pkl')  #сейчас это пайплайн который включает в себя и модель и векторайзер
-    image_model_path = os.path.join(base_dir, 'updated_model2.h5')
+    image_model_path = os.path.join(base_dir, 'updated_model22.h5')
     with open(model_path, 'rb') as f:
         model = pickle.load(f)
         print("Text model loaded successfully.")
