@@ -72,6 +72,10 @@ async def get_user_profile_photos(bot, user_id):
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if  update.message and update.message.chat and update.message.reply_to_message and update.message.chat.type == "supergroup" :
+        try:
+            owner = await sync_to_async(Owner.objects.get)(channel_id=str(update.message.chat.id))
+        except:
+            return
         user_id = update.message.from_user.id
         username = update.message.from_user.username.lower() if update.message.from_user.username else "unknown_user"
         print(f"Message from supergroup : {update.message.text}")
