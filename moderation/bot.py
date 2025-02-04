@@ -125,8 +125,35 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     original_message = update.message.reply_to_message
                     post_time = original_message.date
                     comment_time = update.message.date
-                    if (comment_time - post_time) < timedelta(seconds=10):
+
+                    if (comment_time - post_time) < timedelta(seconds=1.8):
+                        original_message = update.message.reply_to_message
+                        owner = await sync_to_async(Owner.objects.get)(channel_id=str(update.message.chat.id))
+
+                        if original_message.caption:
+                            post_text = f"{original_message.caption[:20]}..."
+                        elif original_message.text:
+                            post_text = f"{original_message.text[:20]}..."
+                        else:
+                            post_text = "No text"
+                        sent_from = update.message.from_user
+                        profile_link = f"https://t.me/{sent_from.username}" if sent_from.username else f"tg://user?id={sent_from.id}"
+                        await sync_to_async(DeletedComment.objects.create)(
+                            post=post_text.lower(),
+                            comment=update.message.text.lower() if update.message.text else "No text",
+                            user=username,
+                            channel_id=str(update.message.chat.id),
+                            owner = owner,
+                            detected_by = '2sec check',
+                            profile_link=profile_link
+                        )
+                        await update.message.delete()
+                        print(f'The comment/by -{update.message.text if update.message.text else username}- was deleted because it had been sent within 2 seconds')
+                        return
+                        
+                    elif (comment_time - post_time) < timedelta(seconds=10):
                         asyncio.create_task(delayed_check(user_id, update, context))
+                    
 
             except Exception as e:
                 print(f"Error checking profile picture: {e}")
