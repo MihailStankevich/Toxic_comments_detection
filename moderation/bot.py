@@ -25,7 +25,7 @@ load_dotenv()
 token = os.getenv('TOKEN')
 
 nest_asyncio.apply()
-good = ['irr_i_ssa', 'maxsugarfree', 'xxxxxsssqq', 'igorekbuy', 'abaim', 'matras13', 'sacramentozz', 'sd_crown', 'fedor_sidorov19', 'no_nameyou', 'dizel_1', 'alexpikc', 'alexandru9996', 'criminal_stant', 'danilkaysin11']
+good = ['irr_i_ssa', 'maxsugarfree', 'xxxxxsssqq', 'igorekbuy', 'abaim', 'matras13', 'sacramentozz', 'sd_crown', 'fedor_sidorov19', 'no_nameyou', 'dizel_1', 'alexpikc', 'alexandru9996', 'criminal_stant', 'danilkaysin11', 'evgeniy_100011']
 good_id = [1743466232, 7401964075]
 def predict_comment(comment, model):
 
@@ -76,6 +76,11 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             owner = await sync_to_async(Owner.objects.get)(channel_id=str(update.message.chat.id))
         except:
             return
+        try:
+            nickname = update.message.from_user.full_name.lower() if update.message.from_user.full_name else "unknown_nickname"
+            print(f"From {nickname}")
+        except:
+            pass
         user_id = update.message.from_user.id
         username = update.message.from_user.username.lower() if update.message.from_user.username else "unknown_user"
         print(f"Message from supergroup : {update.message.text}")
