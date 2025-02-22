@@ -9,14 +9,18 @@ django.setup()
 # Load model and vectorizer
 def load_model():
     base_dir = os.path.dirname(os.path.abspath(__file__)) 
-    model_path = os.path.join(base_dir, 'svc_spam_model.pkl')  #сейчас это пайплайн который включает в себя и модель и векторайзер
+    model_path = os.path.join(base_dir, 'logreg88.pkl') 
+    vectorizer_path = os.path.join(base_dir, 'vectorizer.pkl')
     image_model_path = os.path.join(base_dir, 'updated_model22.h5')
     with open(model_path, 'rb') as f:
         model = pickle.load(f)
         print("Text model loaded successfully.")
+    with open(vectorizer_path, 'rb') as f:
+        vectorizer = pickle.load(f)
+        print("Vectorizer loaded successfully.")
     image_model = tf.keras.models.load_model(image_model_path)
     print("Image model loaded successfully.")
-    return model, image_model
+    return model, image_model, vectorizer
 
 
-model, image_model = load_model()
+model, image_model, vectorizer = load_model()

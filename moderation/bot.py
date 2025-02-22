@@ -19,7 +19,7 @@ from datetime import datetime, timedelta
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'channelmoderation.settings')
 django.setup()
-from moderation.ml import model, image_model
+from moderation.ml import model, image_model, vectorizer
 from moderation.models import DeletedComment , Owner, BlockedUser
 load_dotenv()
 token = os.getenv('TOKEN')
@@ -27,13 +27,16 @@ token = os.getenv('TOKEN')
 nest_asyncio.apply()
 good = ['irr_i_ssa', 'maxsugarfree', 'xxxxxsssqq', 'igorekbuy', 'abaim', 'matras13', 'sacramentozz', 'sd_crown', 'fedor_sidorov19', 'no_nameyou', 'dizel_1', 'alexpikc', 'alexandru9996', 'criminal_stant', 'danilkaysin11', 'evgeniy_100011', 'skqzgraf']
 good_id = [1743466232, 7401964075]
-def predict_comment(comment, model):
 
-    #comment_vector = vectorizer.transform([comment])
-
-    prediction = model.predict([comment])
-
-    label_mapping = {0: "Non-offensive", 1: "Offensive"}
+def predict_nick(nick, vectorizer, model):
+    # Vectorize the input comment
+    comment_vector = vectorizer.transform([nick])
+    
+    # Predict the class
+    prediction = model.predict(comment_vector)
+    
+    # If needed, add a mapping for labels
+    label_mapping = {0: "Non-spam", 1: "Spam"}
     return label_mapping.get(prediction[0], "Unknown")
 
 def classify_image(image_path, model):
@@ -76,19 +79,14 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             owner = await sync_to_async(Owner.objects.get)(channel_id=str(update.message.chat.id))
         except:
             return
-        try:
-            nickname = update.message.from_user.full_name.lower() if update.message.from_user.full_name else "unknown_nickname"
-            print(f"From {nickname}")
-        except:
-            pass
         user_id = update.message.from_user.id
         username = update.message.from_user.username.lower() if update.message.from_user.username else "unknown_user"
         print(f"Message from supergroup : {update.message.text}")
         if username in good or update.message.from_user.id in good_id:
             pass
         else:
-            try:
-                #first of all checking the image
+            #first of all checking the image
+            try:  
                 profile_photos = await get_user_profile_photos(context.bot, user_id)
                 if profile_photos and profile_photos.photos:
                     largest_photo = max(profile_photos.photos[0], key=lambda x: x.width)
@@ -98,7 +96,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                         await file.download_to_drive(temp_file.name)
                         image_result = classify_image(temp_file.name, image_model)
                         print(f"Image result: {image_result}")
-                    #and then checking the text
+
                         original_message = update.message.reply_to_message
                         owner = await sync_to_async(Owner.objects.get)(channel_id=str(update.message.chat.id))
 
@@ -130,7 +128,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     original_message = update.message.reply_to_message
                     post_time = original_message.date
                     comment_time = update.message.date
-
+                     #if it was sent in the first 1.8 seconds - delete it
                     if (comment_time - post_time) < timedelta(seconds=1.8):
                         original_message = update.message.reply_to_message
                         owner = await sync_to_async(Owner.objects.get)(channel_id=str(update.message.chat.id))
@@ -155,7 +153,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                         await update.message.delete()
                         print(f'The comment/by -{update.message.text if update.message.text else username}- was deleted because it had been sent within 2 seconds')
                         return
-                        
+                    #if it was sent in the first 10 seconds - check the profile picture again
                     if (comment_time - post_time) < timedelta(seconds=10):
                         asyncio.create_task(delayed_check(user_id, update, context))
                     
@@ -163,8 +161,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             except Exception as e:
                 print(f"Error checking profile  picture: {e}")
 
-            try:
-                #check for the inline buttons and forward from bot
+            #check for the inline buttons and forward from bot
+            try:   
                 has_inline_buttons = update.message.reply_markup and update.message.reply_markup.inline_keyboard
                 is_forwarded_from_bot = hasattr(update.message, 'forward_from') and update.message.forward_from and update.message.forward_from.is_bot
                 if has_inline_buttons or is_forwarded_from_bot:
@@ -194,6 +192,41 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 
             except Exception as e:
                 print(f"Error checking inline buttons: {e}")
+
+            #checking nickname
+            try:             
+                nickname = update.message.from_user.full_name.lower() if update.message.from_user.full_name else "unknown_nickname"
+    
+                nickname_result = predict_nick(nickname, vectorizer, model)
+                print(f"Nickname result for {nickname}: {nickname_result}")
+
+                if nickname_result == "Spam":
+                    original_message = update.message.reply_to_message
+                    owner = await sync_to_async(Owner.objects.get)(channel_id=str(update.message.chat.id))
+
+                    if original_message.caption:
+                        post_text = f"{original_message.caption[:20]}..."
+                    elif original_message.text:
+                        post_text = f"{original_message.text[:20]}..."
+                    else:
+                        post_text = "No text"
+                    sent_from = update.message.from_user
+                    profile_link = f"https://t.me/{sent_from.username}" if sent_from.username else f"tg://user?id={sent_from.id}"
+                    await sync_to_async(DeletedComment.objects.create)(
+                        post=post_text.lower(),
+                        comment=update.message.text.lower() if update.message.text else "No text",
+                        user=username,
+                        channel_id=str(update.message.chat.id),
+                        owner = owner,
+                        detected_by = f'Nickname: {nickname}',
+                        profile_link=profile_link
+                    )
+                    await update.message.delete()
+                    print(f'The comment/by -{update.message.text if update.message.text else username}- was deleted because it had been classified as spam by nickname')
+                    return
+                
+            except Exception as e:
+                print(f"Error checking nickname: {e}")
 
         owner = await sync_to_async(Owner.objects.get)(channel_id=str(update.message.chat.id))
         blocked_user_queryset = (BlockedUser .objects.filter)(
