@@ -1,5 +1,6 @@
 import requests
 import tensorflow as tf
+import sklearn
 import os
 import django
 from dotenv import load_dotenv
