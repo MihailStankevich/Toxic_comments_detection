@@ -26,7 +26,7 @@ load_dotenv()
 token = os.getenv('TOKEN')
 
 nest_asyncio.apply()
-good = ['irr_i_ssa', 'maxsugarfree', 'xxxxxsssqq', 'igorekbuy', 'abaim', 'matras13', 'sacramentozz', 'sd_crown', 'fedor_sidorov19', 'no_nameyou', 'dizel_1', 'alexpikc', 'alexandru9996', 'criminal_stant', 'danilkaysin11', 'evgeniy_100011', 'skqzgraf']
+good = ['irr_i_ssa', 'maxsugarfree', 'xxxxxsssqq', 'igorekbuy', 'abaim', 'matras13', 'sacramentozz', 'sd_crown', 'fedor_sidorov19', 'no_nameyou', 'dizel_1', 'alexpikc', 'alexandru9996', 'criminal_stant', 'danilkaysin11', 'evgeniy_100011', 'skqzgraf', 'lllllllllllllllllliiilll']
 good_id = [1743466232, 7401964075]
 
 def predict_nick(nick, vectorizer, model):
