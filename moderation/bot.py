@@ -31,7 +31,8 @@ good_id = [1743466232, 7401964075]
 
 def predict_nick(nick, vectorizer, model):
     # Vectorize the input comment
-    nick = nick[:25]
+    if len(nick) > 25:
+        nick = nick[:25]
     comment_vector = vectorizer.transform([nick])
     
     # Predict the class
@@ -166,8 +167,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             #check for the inline buttons and forward from bot
             try:   
                 has_inline_buttons = update.message.reply_markup and update.message.reply_markup.inline_keyboard
-                is_forwarded_from_bot = hasattr(update.message, 'forward_from') and update.message.forward_from and update.message.forward_from.is_bot
-                if has_inline_buttons or is_forwarded_from_bot:
+                if has_inline_buttons:
                     original_message = update.message.reply_to_message
                     owner = await sync_to_async(Owner.objects.get)(channel_id=str(update.message.chat.id))
 
@@ -296,8 +296,7 @@ async def main():
     application = Application.builder().token(TOKEN).build()
 
     # Add a message handler to listen for all text messages
-    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
-    application.add_handler(MessageHandler(filters.VOICE, handle_message)) # mesage handler for voice messages
+    application.add_handler(MessageHandler(filters.ALL, handle_message)) # mesage handler for voice messages
     # Start polling the bot
     await application.run_polling()
 
