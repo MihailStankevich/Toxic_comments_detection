@@ -31,6 +31,7 @@ good_id = [1743466232, 7401964075]
 
 def predict_nick(nick, vectorizer, model):
     # Vectorize the input comment
+    nick = nick[:25]
     comment_vector = vectorizer.transform([nick])
     
     # Predict the class
