@@ -31,8 +31,6 @@ good_id = [1743466232, 7401964075, 395389772, 431482609, 7895115780]
 
 def predict_nick(nick, vectorizer, model):
     # Vectorize the input comment
-    if len(nick) > 25:
-        nick = nick[:25]
     comment_vector = vectorizer.transform([nick])
     
     # Predict the class
@@ -220,7 +218,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                         user=username,
                         channel_id=str(update.message.chat.id),
                         owner = owner,
-                        detected_by = f'Nickname: {nickname}',
+                        detected_by = f'Nickname: {nickname[:19]}',
                         profile_link=profile_link
                     )
                     await update.message.delete()
