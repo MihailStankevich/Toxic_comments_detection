@@ -26,9 +26,9 @@ load_dotenv()
 token = os.getenv('TOKEN')
 
 nest_asyncio.apply()
-good = ['irr_i_ssa', 'maxsugarfree', 'xxxxxsssqq', 'igorekbuy', 'abaim', 'matras13', 'sacramentozz', 'sd_crown', 'fedor_sidorov19', 'no_nameyou', 'dizel_1', 'alexpikc', 'alexandru9996', 'criminal_stant', 'danilkaysin11', 'evgeniy_100011', 'skqzgraf', 'lllllllllllllllllliiilll', 'calaider', 'samanhafix', 'grigorypd', 'flaksuspq']
-good_id = [1743466232, 7401964075, 395389772, 431482609, 7895115780]
-bad = ['Оленька', 'Милена', 'Ангелина']
+good = ['irr_i_ssa', 'maxsugarfree', 'xxxxxsssqq', 'igorekbuy', 'abaim', 'matras13', 'sacramentozz', 'sd_crown', 'fedor_sidorov19', 'no_nameyou', 'dizel_1', 'alexpikc', 'alexandru9996', 'criminal_stant', 'danilkaysin11', 'evgeniy_100011', 'skqzgraf', 'lllllllllllllllllliiilll', 'calaider', 'samanhafix', 'grigorypd', 'flaksuspq', 'ne_v_s3ti']
+good_id = [1743466232, 7401964075, 395389772, 431482609, 7895115780, 1094599216]
+bad = ['оленька', 'милена', 'ангелина']
 def predict_nick(nick, vectorizer, model):
     # Vectorize the input comment
     comment_vector = vectorizer.transform([nick])
@@ -225,34 +225,35 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     print(f'The comment/by -{update.message.text if update.message.text else username}- was deleted because it had been classified as spam by nickname')
                     return
                 
+                elif nickname in bad:
+                    await asyncio.sleep(6)
+                    original_message = update.message.reply_to_message
+                    owner = await sync_to_async(Owner.objects.get)(channel_id=str(update.message.chat.id))
+
+                    if original_message.caption:
+                        post_text = f"{original_message.caption[:20]}..."
+                    elif original_message.text:
+                        post_text = f"{original_message.text[:20]}..."
+                    else:
+                        post_text = "No text"
+                    sent_from = update.message.from_user
+                    profile_link = f"https://t.me/{sent_from.username}" if sent_from.username else f"tg://user?id={sent_from.id}"
+                    await sync_to_async(DeletedComment.objects.create)(
+                        post=post_text.lower(),
+                        comment=update.message.text.lower()[:300] if update.message.text else "No text",
+                        user=username,
+                        channel_id=str(update.message.chat.id),
+                        owner = owner,
+                        detected_by = f'Nickname: {nickname[:19]}',
+                        profile_link=profile_link
+                    )
+                    await update.message.delete()
+                    print(f'The comment/by -{update.message.text if update.message.text else username}- was deleted because it had been classified as spam by nickname')
+                    return
+                
             except Exception as e:
                 print(f"Error checking nickname: {e}")
             
-            if username in bad:
-                await asyncio.sleep(6)
-                original_message = update.message.reply_to_message
-                owner = await sync_to_async(Owner.objects.get)(channel_id=str(update.message.chat.id))
-
-                if original_message.caption:
-                    post_text = f"{original_message.caption[:20]}..."
-                elif original_message.text:
-                    post_text = f"{original_message.text[:20]}..."
-                else:
-                    post_text = "No text"
-                sent_from = update.message.from_user
-                profile_link = f"https://t.me/{sent_from.username}" if sent_from.username else f"tg://user?id={sent_from.id}"
-                await sync_to_async(DeletedComment.objects.create)(
-                    post=post_text.lower(),
-                    comment=update.message.text.lower()[:300] if update.message.text else "No text",
-                    user=username,
-                    channel_id=str(update.message.chat.id),
-                    owner = owner,
-                    detected_by = f'Nickname: {nickname[:19]}',
-                    profile_link=profile_link
-                )
-                await update.message.delete()
-                print(f'The comment/by -{update.message.text if update.message.text else username}- was deleted because it had been classified as spam by nickname')
-                return
 
         owner = await sync_to_async(Owner.objects.get)(channel_id=str(update.message.chat.id))
         blocked_user_queryset = (BlockedUser .objects.filter)(
