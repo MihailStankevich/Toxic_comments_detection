@@ -26,8 +26,8 @@ load_dotenv()
 token = os.getenv('TOKEN')
 
 nest_asyncio.apply()
-good = ['irr_i_ssa', 'maxsugarfree', 'xxxxxsssqq', 'igorekbuy', 'abaim', 'matras13', 'sacramentozz', 'sd_crown', 'fedor_sidorov19', 'no_nameyou', 'dizel_1', 'alexpikc', 'alexandru9996', 'criminal_stant', 'danilkaysin11', 'evgeniy_100011', 'skqzgraf', 'lllllllllllllllllliiilll', 'calaider', 'samanhafix', 'grigorypd', 'flaksuspq', 'ne_v_s3ti', 'vejderprikhozhanin', 'pontussss', 'ekaterina_burkina', 'turkovvvvv', '	savitaarrr', 'jmotbond', 'ilyailyailyailyailyai', 'vinata87']
-good_id = [1743466232, 7401964075, 395389772, 431482609, 7895115780, 1094599216, 5930100195]
+good = {'irr_i_ssa', 'maxsugarfree', 'xxxxxsssqq', 'igorekbuy', 'abaim', 'matras13', 'sacramentozz', 'sd_crown', 'fedor_sidorov19', 'no_nameyou', 'dizel_1', 'alexpikc', 'alexandru9996', 'criminal_stant', 'danilkaysin11', 'evgeniy_100011', 'skqzgraf', 'lllllllllllllllllliiilll', 'calaider', 'samanhafix', 'grigorypd', 'flaksuspq', 'ne_v_s3ti', 'vejderprikhozhanin', 'pontussss', 'ekaterina_burkina', 'turkovvvvv', '	savitaarrr', 'jmotbond', 'ilyailyailyailyailyai', 'vinata87'}
+good_id = {1743466232, 7401964075, 395389772, 431482609, 7895115780, 1094599216, 5930100195}
 bad = ['оленька', 'милена', 'ангелина']
 def predict_nick(nick, vectorizer, model):
     # Vectorize the input comment
@@ -76,14 +76,24 @@ async def get_user_profile_photos(bot, user_id):
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if  update.message and update.message.chat and update.message.reply_to_message and update.message.chat.type == "supergroup" :
+        # Checking if the owner is in the database. if not - return
         try:
             owner = await sync_to_async(Owner.objects.get)(channel_id=str(update.message.chat.id))
         except:
             return
+        #checking if the user is in the good list or if i have amrked him as good(permament block )
         user_id = update.message.from_user.id
         username = update.message.from_user.username.lower() if update.message.from_user.username else "unknown_user"
         print(f"Message from supergroup : {update.message.text}")
-        if username in good or update.message.from_user.id in good_id:
+
+        owner = await sync_to_async(Owner.objects.get)(channel_id=str(update.message.chat.id))
+        blocked_user_queryset = (BlockedUser .objects.filter)(
+            username=username,
+            owner=owner
+        ).select_related('owner') 
+        blocked_user = await sync_to_async(blocked_user_queryset.first)() 
+        #checking if the user is in the good list or if i have amrked him as good(permament block )
+        if username in good or update.message.from_user.id in good_id or (blocked_user and blocked_user.is_active()):
             pass
         else:
             #first of all checking the image
@@ -162,7 +172,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             except Exception as e:
                 print(f"Error checking profile  picture: {e}")
 
-            #check for the inline buttons and forward from bot
+            #check for the inline buttons
             try:   
                 has_inline_buttons = update.message.reply_markup and update.message.reply_markup.inline_keyboard
                 if has_inline_buttons:
@@ -253,20 +263,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 
             except Exception as e:
                 print(f"Error checking nickname: {e}")
-            
-
-        owner = await sync_to_async(Owner.objects.get)(channel_id=str(update.message.chat.id))
-        blocked_user_queryset = (BlockedUser .objects.filter)(
-            username=username,
-            owner=owner
-        ).select_related('owner') 
-        
-        blocked_user = await sync_to_async(blocked_user_queryset.first)() 
-
-        if blocked_user and blocked_user.is_active():
-            #await update.message.reply_text("You are blocked from commenting.")
-            await update.message.delete()
-            return  
         
 async def delayed_check(user_id, update: Update, context: ContextTypes.DEFAULT_TYPE):
     await asyncio.sleep(12)
