@@ -88,7 +88,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         owner = await sync_to_async(Owner.objects.get)(channel_id=str(update.message.chat.id))
         blocked_user_queryset = (BlockedUser .objects.filter)(
-            username=username,
+            username=user_id,
             owner=owner
         ).select_related('owner') 
         blocked_user = await sync_to_async(blocked_user_queryset.first)() 
@@ -122,8 +122,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                             profile_link = f"https://t.me/{sent_from.username}" if sent_from.username else f"tg://user?id={sent_from.id}"
                             await sync_to_async(DeletedComment.objects.create)(
                                 post=post_text.lower(),
-                                comment=update.message.text.lower()[:300] if update.message.text else "No text",
-                                user=username,
+                                comment=(update.message.text.lower()[:300] if update.message.text else "No text") + f" by {username}",
+                                user=user_id,
                                 channel_id=str(update.message.chat.id),
                                 owner = owner,
                                 detected_by = 'Profile picture',
@@ -154,8 +154,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                         profile_link = f"https://t.me/{sent_from.username}" if sent_from.username else f"tg://user?id={sent_from.id}"
                         await sync_to_async(DeletedComment.objects.create)(
                             post=post_text.lower(),
-                            comment=update.message.text.lower()[:300] if update.message.text else "No text",
-                            user=username,
+                            comment=(update.message.text.lower()[:300] if update.message.text else "No text") + f" by {username}",
+                            user=user_id,
                             channel_id=str(update.message.chat.id),
                             owner = owner,
                             detected_by = '2sec check',
@@ -189,8 +189,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     profile_link = f"https://t.me/{sent_from.username}" if sent_from.username else f"tg://user?id={sent_from.id}"
                     await sync_to_async(DeletedComment.objects.create)(
                         post=post_text.lower(),
-                        comment=update.message.text.lower()[:300] if update.message.text else "No text",
-                        user=username,
+                        comment=(update.message.text.lower()[:300] if update.message.text else "No text") + f" by {username}",
+                        user=user_id,
                         channel_id=str(update.message.chat.id),
                         owner = owner,
                         detected_by = 'Inline buttons',
@@ -224,8 +224,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     profile_link = f"https://t.me/{sent_from.username}" if sent_from.username else f"tg://user?id={sent_from.id}"
                     await sync_to_async(DeletedComment.objects.create)(
                         post=post_text.lower(),
-                        comment=update.message.text.lower()[:300] if update.message.text else "No text",
-                        user=username,
+                        comment=(update.message.text.lower()[:300] if update.message.text else "No text") + f" by {username}",
+                        user=user_id,
                         channel_id=str(update.message.chat.id),
                         owner = owner,
                         detected_by = f'Nickname: {nickname[:19]}',
@@ -250,8 +250,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     profile_link = f"https://t.me/{sent_from.username}" if sent_from.username else f"tg://user?id={sent_from.id}"
                     await sync_to_async(DeletedComment.objects.create)(
                         post=post_text.lower(),
-                        comment=update.message.text.lower()[:300] if update.message.text else "No text",
-                        user=username,
+                        comment=(update.message.text.lower()[:300] if update.message.text else "No text") + f" by {username}",
+                        user=user_id,
                         channel_id=str(update.message.chat.id),
                         owner = owner,
                         detected_by = f'Nickname: {nickname[:19]}',
@@ -266,6 +266,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         
 async def delayed_check(user_id, update: Update, context: ContextTypes.DEFAULT_TYPE):
     await asyncio.sleep(12)
+    username = update.message.from_user.username.lower() if update.message.from_user.username else "unknown_user"
     try:
         # Process profile photo again after delay
         profile_photos = await context.bot.get_user_profile_photos(user_id=user_id)
@@ -292,8 +293,8 @@ async def delayed_check(user_id, update: Update, context: ContextTypes.DEFAULT_T
 
                     await sync_to_async(DeletedComment.objects.create)(
                         post=post_text.lower(),
-                         comment=update.message.text.lower()[:300] if update.message.text else "No text",
-                        user=update.message.from_user.username.lower() if update.message.from_user.username else "unknown_user",
+                        comment=(update.message.text.lower()[:300] if update.message.text else "No text") + f" by {username}",
+                        user=user_id,
                         channel_id=str(update.message.chat.id),
                         owner=await sync_to_async(Owner.objects.get)(channel_id=str(update.message.chat.id)),
                         detected_by="Profile picture",

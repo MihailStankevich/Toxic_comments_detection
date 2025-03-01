@@ -62,6 +62,7 @@ def blocked_users(request,channel_id):
             user.remaining_time_display = f"{days}d {hours}h {minutes}m {seconds}s" if days > 0 else f"{hours}h {minutes}m {seconds}s"
     return render(request, 'moderation/blocked_users.html',{'blocked_users': blocked_users, 'total': total})
 
+#this actualy gives permission to everuyhing (means the user is not spam)
 @login_required
 def block_user(request, username):
     if request.method == 'POST':
@@ -87,7 +88,7 @@ def block_user(request, username):
         if not is_permanent:
             messages.success(request, f"User {username} has been blocked for {block_duration} hours.")
         else:
-            messages.success(request, f"User {username} has been permanently blocked.")
+            messages.success(request, f"User {username} has been permanently granted access.")
         return redirect('admin_deleted_comments', channel_id=request.user.channel_id)
     
 @login_required
