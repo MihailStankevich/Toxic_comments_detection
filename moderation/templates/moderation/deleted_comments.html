@@ -16,8 +16,8 @@
                 <th>From User</th>
                 <th>Post Text</th>
                 <th>Deleted On</th>
-                <th>Is blocked(✔/✖)</th>
-                <th>Block the user(hours)</th>
+                <th>Is granted(✔/✖)</th>
+                <th>Grant access(hours)</th>
             </tr>
         </thead>
         <tbody>
@@ -54,11 +54,11 @@
                                 <input type="hidden" name="comment_id" value="{{ comment.id }}">
                                 <div class="form-group">
                                     <input type="number" name="block_duration" id='block_duration' min="1" placeholder="Hours" title="Block duration in minutes" required class="form-input-1 block-duration">
-                                    <button type="submit">Block</button>
+                                    <button type="submit">Access</button>
                                 </div>
                                 <div class="checkbox-container">
                                     <input type="checkbox" name="is_permanent" id="is_permanent" class="checkbox-input is-permanent">
-                                    <label for="is_permanent" class="checkbox-label">Permanent Block</label>
+                                    <label for="is_permanent" class="checkbox-label">Permanent access</label>
                                 </div>
                             </form>
                         </div>
@@ -81,7 +81,7 @@
     <a href="?page={{ deleted_comments.next_page_number }}&search={{ search_query }}"><button>Next page</button></a>
         {% endif %}
     </div>
-    <a href="{% url 'blocked_users' user.channel_id%}"><button>See all blocked users</button></a>
+    <a href="{% url 'blocked_users' user.channel_id%}"><button>See all granted users</button></a>
     <script>
         function toggleComment(commentId) {
             var fullComment = document.getElementById(commentId);

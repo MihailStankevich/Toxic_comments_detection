@@ -4,17 +4,17 @@
 
 {% block content %}
 <h1>Blocked users</h1>
-<p>There are {{total}} users blocked
+<p>There are {{total}} users granted
 
 <table>
     <thead>
         <tr>
-            <th>Username</th>
+            <th>User</th>
             <th>Comment</th>
-            <th>Blocked at</th>
+            <th>Granted at</th>
             <th>Expires at</th>
             <th>Remaining time</th>
-            <th>Unblock</th>
+            <th>Ungrant</th>
         </tr>
     </thead>
     <tbody>
@@ -35,14 +35,14 @@
                 <td>{{ user.blocked_at }}</td>
                 <td>
                     {% if user.is_permanent %}
-                        <span>Permanent Block</span>
+                        <span>Permanent Grant</span>
                     {% else %}
                         {{ user.expires_at }}
                     {% endif %}
                 </td>
                 <td>
                     {% if user.is_permanent %}
-                        <span>Permanent Block</span>
+                        <span>Permanent Grant</span>
                     {% else %}
                         {{ user.remaining_time_display }}
                     {% endif %}
@@ -50,13 +50,13 @@
                 <td>
                     <form action="{% url 'unblock_user' user.username %}" method="post">
                         {% csrf_token %}
-                        <button type="submit">Unblock</button>
+                        <button type="submit">Ungrant</button>
                     </form>
                 </td>
             </tr>
         {% empty %}
             <tr>
-                <td colspan="5">No blocked users found.</td>
+                <td colspan="5">No granted users found.</td>
             </tr>
         {% endfor %}
     </tbody>
