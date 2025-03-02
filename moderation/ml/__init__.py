@@ -10,8 +10,8 @@ django.setup()
 # Load model and vectorizer
 def load_model():
     base_dir = os.path.dirname(os.path.abspath(__file__)) 
-    model_path = os.path.join(base_dir, 'logreg88.pkl') 
-    vectorizer_path = os.path.join(base_dir, 'vectorizer.pkl')
+    model_path = os.path.join(base_dir, 'cclfnew.pkl') 
+    vectorizer_path = os.path.join(base_dir, 'vectorizernew.pkl')
     image_model_path = os.path.join(base_dir, 'updated_model22.h5')
     with open(model_path, 'rb') as f:
         model = pickle.load(f)

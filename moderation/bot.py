@@ -28,7 +28,8 @@ token = os.getenv('TOKEN')
 nest_asyncio.apply()
 good = {'irr_i_ssa', 'maxsugarfree', 'xxxxxsssqq', 'igorekbuy', 'abaim', 'matras13', 'sacramentozz', 'sd_crown', 'fedor_sidorov19', 'no_nameyou', 'dizel_1', 'alexpikc', 'alexandru9996', 'criminal_stant', 'danilkaysin11', 'evgeniy_100011', 'skqzgraf', 'lllllllllllllllllliiilll', 'calaider', 'samanhafix', 'grigorypd', 'flaksuspq', 'ne_v_s3ti', 'vejderprikhozhanin', 'pontussss', 'ekaterina_burkina', 'turkovvvvv', '	savitaarrr', 'jmotbond', 'ilyailyailyailyailyai', 'vinata87'}
 good_id = {1743466232, 7401964075, 395389772, 431482609, 7895115780, 1094599216, 5930100195, 1378388456, 5295539479, 1402712721}
-bad = ['оленька', 'милена', 'ангелина', 'vasiliseo', 'анюта']
+bad = ['оленька', 'милена', 'ангелина', 'анюта']
+bad_username = {'vasiliseo'}
 def predict_nick(nick, vectorizer, model):
     # Vectorize the input comment
     comment_vector = vectorizer.transform([nick])
@@ -235,7 +236,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     print(f'The comment/by -{update.message.text if update.message.text else username}- was deleted because it had been classified as spam by nickname')
                     return
                 
-                elif nickname in bad:
+                elif nickname in bad or nickname in bad_username:
                     await asyncio.sleep(6)
                     original_message = update.message.reply_to_message
                     owner = await sync_to_async(Owner.objects.get)(channel_id=str(update.message.chat.id))
