@@ -80,6 +80,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if  update.message and update.message.chat and update.message.reply_to_message and update.message.chat.type == "supergroup" :
         # Checking if the owner is in the database. if not - return
         try:
+            await asyncio.sleep(0.1)
             owner = await sync_to_async(Owner.objects.get)(channel_id=str(update.message.chat.id))
         except:
             return
@@ -320,7 +321,7 @@ async def main():
     application = Application.builder().token(TOKEN).build()
 
     # Add a message handler to listen for all text messages
-    application.add_handler(MessageHandler(filters.ALL, handle_message)) # mesage handler for voice messages
+    application.add_handler(MessageHandler(filters.ALL, handle_message, block=False)) # mesage handler for voice messages
     # Start polling the bot
     await application.run_polling()
 
