@@ -74,7 +74,10 @@ def retry(func):
 async def get_user_profile_photos(bot, user_id):
     return await bot.get_user_profile_photos(user_id=user_id)
 
-async def delete_comment(update, context, post_text, comment, user_id, owner, detected_by, profile_link):
+async def delete_comment(update, context, post_text, comment, user_id, owner, detected_by, profile_link, delay=0):
+    if delay > 0:
+        await asyncio.sleep(delay)
+
     await sync_to_async(DeletedComment.objects.create)(
         post=post_text.lower(),
         comment=comment.lower(),
@@ -135,7 +138,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                             sent_from = update.message.from_user
                             profile_link = f"https://t.me/{sent_from.username}" if sent_from.username else f"tg://user?id={sent_from.id}"
                             comment_text = (update.message.text[:300] if update.message.text else "No text") + f" by {username}"
-                            await delete_comment(update, context, post_text, comment_text, user_id, owner, 'Profile picture', profile_link)
+                            asyncio.create_task(delete_comment(update, context, post_text, comment_text, user_id, owner, 'Profile picture', profile_link, delay=6))
                             return  # Stop further processing
 
                 else:
@@ -209,21 +212,11 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                         post_text = "No text"
                     sent_from = update.message.from_user
                     profile_link = f"https://t.me/{sent_from.username}" if sent_from.username else f"tg://user?id={sent_from.id}"
-                    await sync_to_async(DeletedComment.objects.create)(
-                        post=post_text.lower(),
-                        comment=(update.message.text.lower()[:300] if update.message.text else "No text") + f" by {username}",
-                        user=user_id,
-                        channel_id=str(update.message.chat.id),
-                        owner = owner,
-                        detected_by = f'Nickname: {nickname[:19]}',
-                        profile_link=profile_link
-                    )
-                    await update.message.delete()
-                    print(f'The comment/by -{update.message.text if update.message.text else username}- was deleted because it had been classified as spam by nickname')
+                    comment_text = (update.message.text[:300] if update.message.text else "No text") + f" by {username}"
+                    await delete_comment(update, context, post_text, comment_text, user_id, owner, f'Nickname: {nickname[:19]}', profile_link)
                     return
                 
                 elif nickname in bad or username in bad_username or user_id in bad_id or ' sliv' in nickname or 'sliv ' in nickname: 
-                    await asyncio.sleep(6)
                     original_message = update.message.reply_to_message
                     owner = await sync_to_async(Owner.objects.get)(channel_id=str(update.message.chat.id))
 
@@ -235,17 +228,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                         post_text = "No text"
                     sent_from = update.message.from_user
                     profile_link = f"https://t.me/{sent_from.username}" if sent_from.username else f"tg://user?id={sent_from.id}"
-                    await sync_to_async(DeletedComment.objects.create)(
-                        post=post_text.lower(),
-                        comment=(update.message.text.lower()[:300] if update.message.text else "No text") + f" by {username}",
-                        user=user_id,
-                        channel_id=str(update.message.chat.id),
-                        owner = owner,
-                        detected_by = f'Nickname: {nickname[:19]}',
-                        profile_link=profile_link
-                    )
-                    await update.message.delete()
-                    print(f'The comment/by -{update.message.text if update.message.text else username}- was deleted because it had been classified as spam by nickname')
+                    comment_text = (update.message.text[:300] if update.message.text else "No text") + f" by {username}"
+                    asyncio.create_task(delete_comment(update, context, post_text, comment_text, user_id, owner, f'Nickname: {nickname[:19]}', profile_link, delay=6))
                     return
                 
             except Exception as e:
