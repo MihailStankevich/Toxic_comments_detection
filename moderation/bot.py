@@ -236,7 +236,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     print(f'The comment/by -{update.message.text if update.message.text else username}- was deleted because it had been classified as spam by nickname')
                     return
                 
-                elif nickname in bad or nickname in bad_username:
+                elif nickname in bad or username in bad_username or ' sliv' in nickname: 
                     await asyncio.sleep(6)
                     original_message = update.message.reply_to_message
                     owner = await sync_to_async(Owner.objects.get)(channel_id=str(update.message.chat.id))
