@@ -138,7 +138,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                             sent_from = update.message.from_user
                             profile_link = f"https://t.me/{sent_from.username}" if sent_from.username else f"tg://user?id={sent_from.id}"
                             comment_text = (update.message.text[:300] if update.message.text else "No text") + f" by {username}"
-                            asyncio.create_task(delete_comment(update, context, post_text, comment_text, user_id, owner, 'Profile picture', profile_link, delay=6))
+                            await delete_comment(update, context, post_text, comment_text, user_id, owner, 'Profile picture', profile_link)
                             return  # Stop further processing
 
                 else:
