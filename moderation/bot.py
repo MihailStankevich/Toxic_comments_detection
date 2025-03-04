@@ -74,7 +74,18 @@ def retry(func):
 async def get_user_profile_photos(bot, user_id):
     return await bot.get_user_profile_photos(user_id=user_id)
 
-
+async def delete_comment(update, context, post_text, comment, user_id, owner, detected_by, profile_link):
+    await sync_to_async(DeletedComment.objects.create)(
+        post=post_text.lower(),
+        comment=comment.lower(),
+        user=user_id,
+        channel_id=str(update.message.chat.id),
+        owner=owner,
+        detected_by=detected_by,
+        profile_link=profile_link
+    )
+    await update.message.delete()
+    print(f'The comment/by -{comment}- was deleted because it had been classified as spam by {detected_by}')
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if  update.message and update.message.chat and update.message.reply_to_message and update.message.chat.type == "supergroup" :
@@ -112,7 +123,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                         print(f"Image result: {image_result}")
 
                         original_message = update.message.reply_to_message
-                        owner = await sync_to_async(Owner.objects.get)(channel_id=str(update.message.chat.id))
 
                         if image_result == 'Spam':
                             if original_message.caption:
@@ -121,19 +131,11 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                                 post_text = f"{original_message.text[:20]}..."
                             else:
                                 post_text = "No text"
+
                             sent_from = update.message.from_user
                             profile_link = f"https://t.me/{sent_from.username}" if sent_from.username else f"tg://user?id={sent_from.id}"
-                            await sync_to_async(DeletedComment.objects.create)(
-                                post=post_text.lower(),
-                                comment=(update.message.text.lower()[:300] if update.message.text else "No text") + f" by {username}",
-                                user=user_id,
-                                channel_id=str(update.message.chat.id),
-                                owner = owner,
-                                detected_by = 'Profile picture',
-                                profile_link=profile_link
-                            )
-                            await update.message.delete()
-                            print(f'The comment/by -{update.message.text if update.message.text else username}- was deleted because it had been classified as spam by image')
+                            comment_text = (update.message.text[:300] if update.message.text else "No text") + f" by {username}"
+                            await delete_comment(update, context, post_text, comment_text, user_id, owner, 'Profile picture', profile_link)
                             return  # Stop further processing
 
                 else:
@@ -155,17 +157,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                             post_text = "No text"
                         sent_from = update.message.from_user
                         profile_link = f"https://t.me/{sent_from.username}" if sent_from.username else f"tg://user?id={sent_from.id}"
-                        await sync_to_async(DeletedComment.objects.create)(
-                            post=post_text.lower(),
-                            comment=(update.message.text.lower()[:300] if update.message.text else "No text") + f" by {username}",
-                            user=user_id,
-                            channel_id=str(update.message.chat.id),
-                            owner = owner,
-                            detected_by = '2sec check',
-                            profile_link=profile_link
-                        )
-                        await update.message.delete()
-                        print(f'The comment/by -{update.message.text if update.message.text else username}- was deleted because it had been sent within 2 seconds')
+                        comment_text = (update.message.text[:300] if update.message.text else "No text") + f" by {username}"
+                        await delete_comment(update, context, post_text, comment_text, user_id, owner, '2sec check', profile_link)
                         return
                     #if it was sent in the first 10 seconds - check the profile picture again
                     if (comment_time - post_time) < timedelta(seconds=10):
@@ -190,17 +183,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                         post_text = "No text"
                     sent_from = update.message.from_user
                     profile_link = f"https://t.me/{sent_from.username}" if sent_from.username else f"tg://user?id={sent_from.id}"
-                    await sync_to_async(DeletedComment.objects.create)(
-                        post=post_text.lower(),
-                        comment=(update.message.text.lower()[:300] if update.message.text else "No text") + f" by {username}",
-                        user=user_id,
-                        channel_id=str(update.message.chat.id),
-                        owner = owner,
-                        detected_by = 'Inline buttons',
-                        profile_link=profile_link
-                    )
-                    await update.message.delete()
-                    print(f'The comment/by -{update.message.text if update.message.text else username}- was deleted because it had been classified as spam by inline buttons')
+                    comment_text = (update.message.text[:300] if update.message.text else "No text") + f" by {username}"
+                    await delete_comment(update, context, post_text, comment_text, user_id, owner, 'Inline buttons', profile_link)
                     return
                 
             except Exception as e:
@@ -269,6 +253,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         
 async def delayed_check(user_id, update: Update, context: ContextTypes.DEFAULT_TYPE):
     await asyncio.sleep(12)
+    owner = await sync_to_async(Owner.objects.get)(channel_id=str(update.message.chat.id))
     username = update.message.from_user.username.lower() if update.message.from_user.username else "unknown_user"
     try:
         # Process profile photo again after delay
@@ -293,17 +278,8 @@ async def delayed_check(user_id, update: Update, context: ContextTypes.DEFAULT_T
 
                     sent_from = update.message.from_user
                     profile_link = f"https://t.me/{sent_from.username}" if sent_from.username else f"tg://user?id={sent_from.id}"
-
-                    await sync_to_async(DeletedComment.objects.create)(
-                        post=post_text.lower(),
-                        comment=(update.message.text.lower()[:300] if update.message.text else "No text") + f" by {username}",
-                        user=user_id,
-                        channel_id=str(update.message.chat.id),
-                        owner=await sync_to_async(Owner.objects.get)(channel_id=str(update.message.chat.id)),
-                        detected_by="Profile picture",
-                        profile_link=profile_link,
-                    )
-                    await update.message.delete()
+                    comment_text = (update.message.text[:300] if update.message.text else "No text") + f" by {username}"
+                    await delete_comment(update, context, post_text, comment_text, user_id, owner, 'Image', profile_link)
         else:
             print("No profile photo available.")
                     
