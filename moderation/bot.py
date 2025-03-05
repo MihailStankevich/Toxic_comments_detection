@@ -186,8 +186,17 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                         post_text = "No text"
                     sent_from = update.message.from_user
                     profile_link = f"https://t.me/{sent_from.username}" if sent_from.username else f"tg://user?id={sent_from.id}"
-                    comment_text = (update.message.text[:300] if update.message.text else "No text") + f" by {username}"
-                    await delete_comment(update, context, post_text, comment_text, user_id, owner, 'Inline buttons', profile_link)
+                    await sync_to_async(DeletedComment.objects.create)(
+                        post=post_text.lower(),
+                        comment=(update.message.text.lower()[:300] if update.message.text else "No text") + f" by {username}",
+                        user=user_id,
+                        channel_id=str(update.message.chat.id),
+                        owner = owner,
+                        detected_by = 'Inline buttons',
+                        profile_link=profile_link
+                    )
+                    await update.message.delete()
+                    print(f'The comment/by -{update.message.text if update.message.text else username}- was deleted because it had been classified as spam by inline buttons')
                     return
                 
             except Exception as e:
