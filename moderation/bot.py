@@ -140,6 +140,22 @@ async def delete_comment(update, context, post_text, comment, user_id, owner, de
     await update.message.delete()
     print(f'The comment/by -{comment}- was deleted because it had been classified as spam by {detected_by}')
 
+async def delete_edited_comment(update, context, post_text, comment, user_id, owner, detected_by, profile_link, delay=0):
+    if delay > 0:
+        await asyncio.sleep(delay)
+
+    await sync_to_async(DeletedComment.objects.create)(
+        post=post_text.lower(),
+        comment=comment.lower(),
+        user=user_id,
+        channel_id=str(update.edited_message.chat.id),
+        owner=owner,
+        detected_by=detected_by,
+        profile_link=profile_link
+    )
+    await update.edited_message.delete()
+    print(f'The comment/by -{comment}- was deleted because it had been classified as spam by {detected_by}')
+
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if  update.message and update.message.chat and update.message.reply_to_message and update.message.chat.type == "supergroup" :
         # Checking if the owner is in the database. if not - return
@@ -336,7 +352,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             except Exception as e:
                 print(f"Error checking nickname: {e}")
 
-    elif update.edited_message and update.edited_message.chat and update.edited_message.reply_to_message and update.edited_message.chat.type == "supergroup":
+    elif hasattr(update, "edited_message") and update.edited_message and update.edited_message.chat and update.edited_message.reply_to_message and update.edited_message.chat.type == "supergroup":
         try:
             await asyncio.sleep(0.1)
             owner = await sync_to_async(Owner.objects.get)(channel_id=str(update.edited_message.chat.id))
@@ -376,7 +392,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     sent_from = update.edited_message.from_user
                     profile_link = f"https://t.me/{sent_from.username}" if sent_from.username else f"tg://user?id={sent_from.id}"
                     comment_text = (update.edited_message.text[:300] if update.edited_message.text else "No text") + f" by {username}"
-                    await delete_comment(update, context, post_text, comment_text, user_id, owner, f'AI: {nickname[:19]}', profile_link)
+                    await delete_edited_comment(update, context, post_text, comment_text, user_id, owner, f'AI: {nickname[:19]}', profile_link)
                     return
             except Exception as e:
                 print(f"Error checking edited message: {e}")
