@@ -301,7 +301,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 else:
                     nickname_result = predict_nick(nickname, vectorizer, model)
                     print(f"Nickname result for {nickname}: {nickname_result}")
-                    if nickname_result == "spam":
+                    if nickname_result == "Spam":
                         original_message = update.message.reply_to_message
                         owner = await sync_to_async(Owner.objects.get)(channel_id=str(update.message.chat.id))
 
