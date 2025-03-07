@@ -1,4 +1,5 @@
 import requests
+from openai import OpenAI
 import tensorflow as tf
 import sklearn
 import os
@@ -13,6 +14,7 @@ from telegram.ext import Application, MessageHandler, filters, ContextTypes
 from telegram.error import RetryAfter, TimedOut, NetworkError, TelegramError
 import time
 from datetime import datetime, timedelta
+import re
 #############
 
 #############
@@ -24,13 +26,14 @@ from moderation.ml import model, image_model, vectorizer
 from moderation.models import DeletedComment , Owner, BlockedUser
 load_dotenv()
 token = os.getenv('TOKEN')
-
+api_key = os.getenv('OPENAI_API_KEY')
 nest_asyncio.apply()
 good = {'irr_i_ssa', 'maxsugarfree', 'xxxxxsssqq', 'igorekbuy', 'abaim', 'matras13', 'sacramentozz', 'sd_crown', 'fedor_sidorov19', 'no_nameyou', 'dizel_1', 'alexpikc', 'alexandru9996', 'criminal_stant', 'danilkaysin11', 'evgeniy_100011', 'skqzgraf', 'lllllllllllllllllliiilll', 'calaider', 'samanhafix', 'grigorypd', 'flaksuspq', 'ne_v_s3ti', 'vejderprikhozhanin', 'pontussss', 'ekaterina_burkina', 'turkovvvvv', '	savitaarrr', 'jmotbond', 'ilyailyailyailyailyai', 'vinata87'}
 good_id = {1743466232, 7401964075, 395389772, 431482609, 7895115780, 1094599216, 5930100195, 1378388456, 5295539479, 1402712721}
 bad = ['оленька', 'милена', 'ангелина', 'анюта', 'стася', 'стасюша']
 bad_username = {'vasiliseo', 'vasiopew', 'alekseisapog'}
 bad_id = {7637080567}
+
 def predict_nick(nick, vectorizer, model):
     # Vectorize the input comment
     comment_vector = vectorizer.transform([nick])
@@ -68,7 +71,55 @@ def retry(func):
         return None
     return wrapper
 
+def is_suspicious_spam(text):
 
+    cyrillic_pattern = r'[\u0400-\u04FF]'  # Cyrillic letters
+    latin_pattern = r'[A-Za-z]'            # Latin letters
+    special_unicode = r'[\u1D00-\u1D7F]'   # Small caps & phonetic extensions
+
+
+    cyrillic_count = len(re.findall(cyrillic_pattern, text))
+    latin_count = len(re.findall(latin_pattern, text))
+    special_count = len(re.findall(special_unicode, text))
+
+    if cyrillic_count > 0 and latin_count > 0 and special_count == 0:
+        return False  # Normal mixed comment
+
+    # Flag spam-like mixed text (Cyrillic + special Unicode) or heavy special characters
+    if (cyrillic_count > 0 and special_count > 0) or special_count > 2:
+        return True  # Spam detected
+
+    return False 
+
+# Load OpenAI API key from environment variable
+client = OpenAI(
+    api_key=api_key
+)
+def classify_nickname_and_comment(nickname, text_comment):
+    prompt = f""" You are a professional spam detector.
+      You are specialist in betting spam, 18+ spam and sales (russian and english languages). 
+      However, casual discussions about betting, odds, and matches are NOT spam.
+      Classify the following nickname and text comment as either 'spam' or 'not spam':\n\nNickname: {nickname}\nText Comment: {text_comment}\nClassification:"""
+    response = client.chat.completions.create(
+        messages=[
+            {
+                "role": "user",
+                "content": prompt,
+            }
+        ],
+        model="gpt-4o-mini"  ,
+        max_tokens=5,
+        temperature=0.0
+    )
+
+    classification = response.choices[0].message.content.strip().lower()
+    print(classification)
+    if 'spam' in classification:
+        if 'not' in classification:
+            return 'not spam'
+        return 'spam'
+    else:
+        return 'unknown'  # Handle unexpected outputs
 # Apply retry logic to get_user_profile_photos
 @retry
 async def get_user_profile_photos(bot, user_id):
@@ -202,14 +253,12 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             except Exception as e:
                 print(f"Error checking inline buttons: {e}")
 
-            #checking nickname
+            #checking nickname and text
             try:             
                 nickname = update.message.from_user.full_name.lower() if update.message.from_user.full_name else "unknown_nickname"
-    
-                nickname_result = predict_nick(nickname, vectorizer, model)
-                print(f"Nickname result for {nickname}: {nickname_result}")
+                text = update.message.text if update.message.text else "No text"
 
-                if nickname_result == "Spam":
+                if is_suspicious_spam(text):
                     original_message = update.message.reply_to_message
                     owner = await sync_to_async(Owner.objects.get)(channel_id=str(update.message.chat.id))
 
@@ -222,7 +271,26 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     sent_from = update.message.from_user
                     profile_link = f"https://t.me/{sent_from.username}" if sent_from.username else f"tg://user?id={sent_from.id}"
                     comment_text = (update.message.text[:300] if update.message.text else "No text") + f" by {username}"
-                    await delete_comment(update, context, post_text, comment_text, user_id, owner, f'Nickname: {nickname[:19]}', profile_link)
+                    await delete_comment(update, context, post_text, comment_text, user_id, owner, f'Symbols: {nickname[:19]}', profile_link)
+                    return
+
+                ai_result = classify_nickname_and_comment(nickname, text)
+                print(f"AI result for {nickname}: {ai_result}")
+
+                if ai_result == "spam":
+                    original_message = update.message.reply_to_message
+                    owner = await sync_to_async(Owner.objects.get)(channel_id=str(update.message.chat.id))
+
+                    if original_message.caption:
+                        post_text = f"{original_message.caption[:20]}..."
+                    elif original_message.text:
+                        post_text = f"{original_message.text[:20]}..."
+                    else:
+                        post_text = "No text"
+                    sent_from = update.message.from_user
+                    profile_link = f"https://t.me/{sent_from.username}" if sent_from.username else f"tg://user?id={sent_from.id}"
+                    comment_text = (update.message.text[:300] if update.message.text else "No text") + f" by {username}"
+                    await delete_comment(update, context, post_text, comment_text, user_id, owner, f'AI: {nickname[:19]}', profile_link)
                     return
                 
                 elif nickname in bad or username in bad_username or user_id in bad_id or ' sliv' in nickname or 'sliv ' in nickname: 
@@ -273,6 +341,7 @@ async def delayed_check(user_id, update: Update, context: ContextTypes.DEFAULT_T
                     profile_link = f"https://t.me/{sent_from.username}" if sent_from.username else f"tg://user?id={sent_from.id}"
                     comment_text = (update.message.text[:300] if update.message.text else "No text") + f" by {username}"
                     await delete_comment(update, context, post_text, comment_text, user_id, owner, 'Image', profile_link)
+                    return
         else:
             print("No profile photo available.")
                     
