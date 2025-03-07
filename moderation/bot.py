@@ -113,7 +113,6 @@ def classify_nickname_and_comment(nickname, text_comment):
     )
 
     classification = response.choices[0].message.content.strip().lower()
-    print(classification)
     if 'spam' in classification:
         if 'not' in classification:
             return 'not spam'
@@ -254,7 +253,12 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 print(f"Error checking inline buttons: {e}")
 
             #checking nickname and text
-            try:             
+            try:     
+                original_message = update.message.reply_to_message
+                post_time = original_message.date
+                comment_time = update.message.date
+                #if it was sent in the first 1.8 seconds - delete it
+                  
                 nickname = update.message.from_user.full_name.lower() if update.message.from_user.full_name else "unknown_nickname"
                 text = update.message.text if update.message.text else "No text"
 
@@ -273,27 +277,47 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     comment_text = (update.message.text[:300] if update.message.text else "No text") + f" by {username}"
                     await delete_comment(update, context, post_text, comment_text, user_id, owner, f'Symbols: {nickname[:19]}', profile_link)
                     return
-
-                ai_result = classify_nickname_and_comment(nickname, text)
-                print(f"AI result for {nickname}: {ai_result}")
-
-                if ai_result == "spam":
-                    original_message = update.message.reply_to_message
-                    owner = await sync_to_async(Owner.objects.get)(channel_id=str(update.message.chat.id))
-
-                    if original_message.caption:
-                        post_text = f"{original_message.caption[:20]}..."
-                    elif original_message.text:
-                        post_text = f"{original_message.text[:20]}..."
-                    else:
-                        post_text = "No text"
-                    sent_from = update.message.from_user
-                    profile_link = f"https://t.me/{sent_from.username}" if sent_from.username else f"tg://user?id={sent_from.id}"
-                    comment_text = (update.message.text[:300] if update.message.text else "No text") + f" by {username}"
-                    await delete_comment(update, context, post_text, comment_text, user_id, owner, f'AI: {nickname[:19]}', profile_link)
-                    return
                 
-                elif nickname in bad or username in bad_username or user_id in bad_id or ' sliv' in nickname or 'sliv ' in nickname: 
+                if (comment_time - post_time) < timedelta(minutes=10):
+                    ai_result = classify_nickname_and_comment(nickname, text)
+                    print(f"AI result for {nickname}: {ai_result}")
+
+                    if ai_result == "spam":
+                        original_message = update.message.reply_to_message
+                        owner = await sync_to_async(Owner.objects.get)(channel_id=str(update.message.chat.id))
+
+                        if original_message.caption:
+                            post_text = f"{original_message.caption[:20]}..."
+                        elif original_message.text:
+                            post_text = f"{original_message.text[:20]}..."
+                        else:
+                            post_text = "No text"
+                        sent_from = update.message.from_user
+                        profile_link = f"https://t.me/{sent_from.username}" if sent_from.username else f"tg://user?id={sent_from.id}"
+                        comment_text = (update.message.text[:300] if update.message.text else "No text") + f" by {username}"
+                        await delete_comment(update, context, post_text, comment_text, user_id, owner, f'AI: {nickname[:19]}', profile_link)
+                        return
+                    
+                else:
+                    nickname_result = predict_nick(nickname, vectorizer, model)
+                    print(f"Nickname result for {nickname}: {nickname_result}")
+                    if nickname_result == "spam":
+                        original_message = update.message.reply_to_message
+                        owner = await sync_to_async(Owner.objects.get)(channel_id=str(update.message.chat.id))
+
+                        if original_message.caption:
+                            post_text = f"{original_message.caption[:20]}..."
+                        elif original_message.text:
+                            post_text = f"{original_message.text[:20]}..."
+                        else:
+                            post_text = "No text"
+                        sent_from = update.message.from_user
+                        profile_link = f"https://t.me/{sent_from.username}" if sent_from.username else f"tg://user?id={sent_from.id}"
+                        comment_text = (update.message.text[:300] if update.message.text else "No text") + f" by {username}"
+                        await delete_comment(update, context, post_text, comment_text, user_id, owner, f'Nickname: {nickname[:19]}', profile_link)
+                        return
+                
+                if nickname in bad or username in bad_username or user_id in bad_id or ' sliv' in nickname or 'sliv ' in nickname: 
                     original_message = update.message.reply_to_message
                     owner = await sync_to_async(Owner.objects.get)(channel_id=str(update.message.chat.id))
 
