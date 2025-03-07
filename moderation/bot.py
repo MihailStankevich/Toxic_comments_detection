@@ -335,6 +335,51 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 
             except Exception as e:
                 print(f"Error checking nickname: {e}")
+
+    elif update.edited_message and update.edited_message.chat and update.edited_message.reply_to_message and update.edited_message.chat.type == "supergroup":
+        try:
+            await asyncio.sleep(0.1)
+            owner = await sync_to_async(Owner.objects.get)(channel_id=str(update.edited_message.chat.id))
+        except:
+            return
+        #checking if the user is in the good list or if i have amrked him as good(permament block )
+        user_id = update.edited_message.from_user.id
+        username = update.edited_message.from_user.username.lower() if update.edited_message.from_user.username else "unknown_user"
+        print(f"Message from supergroup : {update.edited_message.text}")
+
+        owner = await sync_to_async(Owner.objects.get)(channel_id=str(update.edited_message.chat.id))
+        blocked_user_queryset = (BlockedUser .objects.filter)(
+            username=user_id,
+            owner=owner
+        ).select_related('owner') 
+        blocked_user = await sync_to_async(blocked_user_queryset.first)() 
+        #checking if the user is in the good list or if i have amrked him as good(permament block )
+        if username in good or update.edited_message.from_user.id in good_id or (blocked_user and blocked_user.is_active()):
+            pass
+        else:           
+            try:
+                nickname = update.edited_message.from_user.full_name.lower() if update.edited_message.from_user.full_name else "unknown_nickname"
+                text = update.edited_message.text if update.edited_message.text else "No text"
+
+                ai_result = classify_nickname_and_comment(nickname, text)
+                print(f"AI result for edited message by {nickname}: {ai_result}")
+
+                if ai_result == "spam":
+                    original_message = update.edited_message.reply_to_message
+
+                    if original_message.caption:
+                        post_text = f"{original_message.caption[:20]}..."
+                    elif original_message.text:
+                        post_text = f"{original_message.text[:20]}..."
+                    else:
+                        post_text = "No text"
+                    sent_from = update.edited_message.from_user
+                    profile_link = f"https://t.me/{sent_from.username}" if sent_from.username else f"tg://user?id={sent_from.id}"
+                    comment_text = (update.edited_message.text[:300] if update.edited_message.text else "No text") + f" by {username}"
+                    await delete_comment(update, context, post_text, comment_text, user_id, owner, f'AI: {nickname[:19]}', profile_link)
+                    return
+            except Exception as e:
+                print(f"Error checking edited message: {e}")
         
 async def delayed_check(user_id, update: Update, context: ContextTypes.DEFAULT_TYPE):
     await asyncio.sleep(12)
@@ -383,7 +428,7 @@ async def main():
     application = Application.builder().token(TOKEN).build()
 
     # Add a message handler to listen for all text messages
-    application.add_handler(MessageHandler(filters.ALL, handle_message, block=False)) # mesage handler for voice messages
+    application.add_handler(MessageHandler(filters.ALL, handle_message, block=False)) # mesage handler for all messages
     # Start polling the bot
     await application.run_polling()
 
